@@ -1,0 +1,11 @@
+May just save file into project files, store filepath in database, use PIL
+Store systematically incremented local filepath (eg {timeline}/image{number})
+ram/ storage / efficiency worries?
+
+https://www.activestate.com/resources/quick-reads/how-to-add-images-in-tkinter/
+^takes the filepath as argument
+
+https://www.plus2net.com/python/tkinter-blob-display.php
+^takes the blob, need to use the IO module
+
+we will use blob: much better practice
