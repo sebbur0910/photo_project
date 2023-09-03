@@ -2,6 +2,7 @@ import customtkinter as ctk
 from PIL import Image
 
 
+# Creates a modified class button with different hovering properties
 class SpecialButton(ctk.CTkButton):
 
     def _on_enter(self, event=None):
@@ -11,6 +12,7 @@ class SpecialButton(ctk.CTkButton):
         self._image.configure(size=(150, 100))
 
 
+# Creates an instance of this class and displays it with a photo
 class PhotoScreen(ctk.CTk):
     def __init__(self):
         super().__init__()
