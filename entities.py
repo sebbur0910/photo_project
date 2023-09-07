@@ -27,6 +27,7 @@ class Photo(Base):
     caption = Column(String)
     num_uses = Column(Integer)
 
+
     timelines = relationship("Timeline",
                              secondary=timeline_photos,
                              order_by="Timeline.timeline_ID",
@@ -65,8 +66,8 @@ class Tag(Base):
 
     photos_with_tag = relationship("Photo",
                                    secondary=photo_tags,
-                                   order_by="Photo.photo_id",
-                                   back_populates="photo_with_tag")
+                                   order_by="Photo.photo_ID",
+                                   back_populates="tags")
 
     def __repr__(self):
         return f"Tag(tag_ID='{self.tag_ID}'," \
