@@ -38,6 +38,12 @@ class Photo(Base):
                         order_by="Tag.tag_ID",
                         back_populates="photos_with_tag")
 
+    @validates("data")
+    def validate_data(self, key, address):
+        if not isinstance(address, bytes):
+            raise TypeError("The data must be in bytes form")
+        else:
+            return address
     def __repr__(self):
         return f"Photo(photo_ID='{self.photo_ID}'," \
                f"date_taken={self.date_taken}), " \
@@ -90,22 +96,10 @@ class Timeline(Base):
     default_border_colour = Column(String)
     default_border_weight = Column(Integer)
 
-    @validates("background_colour")
+    @validates("background_colour", "line_colour", "default_border_colour")
     def validate_background_colour(self, key, address):
         if not re.fullmatch("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", address):
-            raise ValueError("Background colour must be in hex colour code format")
-        return address
-
-    @validates("line_colour")
-    def validate_background_colour(self, key, address):
-        if not re.fullmatch("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", address):
-            raise ValueError("Line colour must be in hex colour code format")
-        return address
-
-    @validates("default_border_colour")
-    def validate_background_colour(self, key, address):
-        if not re.fullmatch("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", address):
-            raise ValueError("Default border colour must be in hex colour code format")
+            raise ValueError(f"{key} must be in hex colour code format")
         return address
 
     photos_on_line = relationship("Photo",
