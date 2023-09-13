@@ -1,3 +1,4 @@
 Pillow~=9.4.0
-PIP~=
 SQLAlchemy~=2.0.20
+customtkinter~=5.2.0
+pytest~=7.4
