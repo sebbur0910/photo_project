@@ -22,7 +22,7 @@ class PhotoScreen(ctk.CTk):
 
                                      size=(150, 100))
 
-        self.button = SpecialButton(self, image=self.my_image, text=None)
+        self.button = SpecialButton(self, image=self.my_image)
 
         self.button.pack()
 

@@ -11,13 +11,10 @@ Base.metadata.create_all(engine)
 database = Database()
 
 
-
-
 class App(ctk.CTk):
 
     def __init__(self):
         super().__init__()
-
 
         self.show_frame("homescreen")
         self.frames = None
@@ -35,19 +32,20 @@ class App(ctk.CTk):
                 widget.pack_forget()
         frame_to_show = self.frames[current_frame]
         frame_to_show.pack(expand=True, fill=ctk.BOTH)
-        frame_to_show.set_up()
-class HomeScreen(ctk.CTk):
+     #   frame_to_show.set_up()
+
+
+class HomeScreen(ctk.CTkFrame):
 
     def __init__(self, root):
-        super().__init__()
+        super().__init__(root)
         self.root = root
         database.add_image(from_default_set="plus")
         plus_image = database.get_image("plus")
         self.my_image = ctk.CTkImage(light_image=Image.open(plus_image),
                                      size=(150, 100))
-
-        self.configure(background="white")
-        self.title("Home")
+  #      self.configure(background="white")
+   #     self.title("Home")
 
         self.title_text = ctk.CTkLabel(self,
                                        text="Home",
@@ -84,15 +82,18 @@ class HomeScreen(ctk.CTk):
 
 
 class AddTimeline:
-    ...
+    def __init__(self, root):
+        ...
 
 
 class PhotoGallery:
-    ...
+    def __init__(self, root):
+        ...
 
 
 class TimelineView:
-    ...
+    def __init__(self, root):
+        ...
 
 
 gui = App()
