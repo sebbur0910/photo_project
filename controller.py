@@ -9,6 +9,7 @@ engine = create_engine('sqlite:///:memory:', echo=True)
 Base.metadata.create_all(engine)
 sess = Session(engine)
 
+
 class Database:
 
     def add_image(self, **kwargs):
@@ -41,3 +42,46 @@ class Database:
     def get_image(self, caption):
         plus_image_binary = sess.query(Photo).filter(Photo.caption == caption).first().data
         return io.BytesIO(plus_image_binary)
+
+    def get_thumbnails(self):
+        return_list = []
+        thumbnail_ids = [timeline.thumbnail_photo_ID for timeline in sess.query(Timeline).all()]
+
+        for timeline_number in len(thumbnail_ids):
+            name = sess.query(Timeline)[timeline_number].name
+            photo_data = sess.query(Photo).filter(Photo.photo_ID == thumbnail_ids[timeline_number])
+            return_list.append(name, photo_data)
+
+    def sort_thumbnails(self, thumbnails, factor):
+        if factor == "A-Z":
+            names = [thumbnail[0] for thumbnail in thumbnails]
+            sorted_names = self.merge_sort(names, False)
+        elif factor == "Z-A":
+            names = [thumbnail[0] for thumbnail in thumbnails]
+            sorted_names = self.merge_sort(names, True)
+        elif factor == "Recently modified":
+            dates = [timeline.date_modified for timeline in sess.query(Timeline).all()]
+            sorted_dates = self.merge_sort(dates, True)
+
+    def merge_sort(self, items, reverse):
+        length = len(items)
+
+        if length == 1 or length == 0:
+            return items
+
+        else:
+            first = self.merge_sort(items[:length // 2])
+            second = self.merge_sort(items[length // 2:])
+            sort = []
+
+            while first or second:
+                if not second:
+                    sort.append(first.pop(0))
+                elif not first:
+                    sort.append(second.pop(0))
+                elif first[0] > second[0] and reverse == False:
+                    sort.append(first.pop(0))
+                else:
+                    sort.append(second.pop(0))
+
+            return sort

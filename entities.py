@@ -89,6 +89,8 @@ class Timeline(Base):
     __tablename__ = "timelines"
     timeline_ID = Column(Integer, primary_key=True)
     name = Column(String)
+    thumbnail_photo_ID = Column(Integer)
+    date_modified = Column(DateTime)
     background_photo_ID = Column(Integer)
     background_colour = Column(String)
     line_colour = Column(String)

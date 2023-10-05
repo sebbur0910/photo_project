@@ -66,6 +66,9 @@ class HomeScreen(ctk.CTkFrame):
                                                image=self.my_image,
                                                command=self.add_new_timeline)
 
+        self.thumbnails = database.get_thumbnails()
+
+
         self.place()
 
     def place(self):
@@ -74,24 +77,24 @@ class HomeScreen(ctk.CTkFrame):
         self.sorter.grid(row=1, column=1)
         self.add_new_thumbnail.grid(row=2, column=1)
 
-    def sort_request(self):
-        ...
+    def sort_request(self, factor):
+        return database.sort_thumbnails(self.thumbnails, factor)
 
     def add_new_timeline(self):
         self.root.show_frame("add_timeline")
 
 
-class AddTimeline:
+class AddTimeline(ctk.CTkFrame):
     def __init__(self, root):
         ...
 
 
-class PhotoGallery:
+class PhotoGallery(ctk.CTkFrame):
     def __init__(self, root):
         ...
 
 
-class TimelineView:
+class TimelineView(ctk.CTkFrame):
     def __init__(self, root):
         ...
 
