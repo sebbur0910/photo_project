@@ -76,9 +76,24 @@ class HomeScreen(ctk.CTkFrame):
         self.sort_by_label.grid(row=1, column=0)
         self.sorter.grid(row=1, column=1)
         self.add_new_thumbnail.grid(row=2, column=1)
+        self.place_timelines()
 
+    def place_timelines(self,sorted_ids):
+        for id in sorted_ids:
+            thumbnail = database.get_thumbnail(id)
+            thumbnail = ctk.CTkImage(light_image=Image.open(thumbnail),
+                                     size=(150, 100))
+            name = database.get_timeline_name(id)
+            ctk.CTkButton(self,
+                          image=thumbnail,
+                          text=name,
+                          command=self.open_timeline
+                          ).grid()
+
+    def open_timeline(self):
+        ...
     def sort_request(self, factor):
-        return database.sort_thumbnails(self.thumbnails, factor)
+        self.place_timelines(database.sort_timelines(factor))
 
     def add_new_timeline(self):
         self.root.show_frame("add_timeline")

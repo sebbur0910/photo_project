@@ -47,21 +47,37 @@ class Database:
         return_list = []
         thumbnail_ids = [timeline.thumbnail_photo_ID for timeline in sess.query(Timeline).all()]
 
-        for timeline_number in len(thumbnail_ids):
+        for timeline_number in range(len(thumbnail_ids)):
             name = sess.query(Timeline)[timeline_number].name
-            photo_data = sess.query(Photo).filter(Photo.photo_ID == thumbnail_ids[timeline_number])
+            photo_data = sess.query(Photo).filter(Photo.photo_ID == thumbnail_ids[timeline_number]).first().data()
+            photo_data = io.BytesIO(photo_data)
             return_list.append(name, photo_data)
 
-    def sort_thumbnails(self, thumbnails, factor):
+        return return_list
+
+    def get_timeline_name(self, id):
+        timeline_name = sess.query(Timeline).filter(Timeline.timeline_ID == id).first().name
+        return timeline_name
+
+    def get_thumbnail(self, id):
+        thumbnail_id = sess.query(Timeline).filter(Timeline.timeline_ID == id).first().thumbnail_id
+        photo_data = sess.query(Photo).filter(Photo.photo_ID == thumbnail_id)
+        return photo_data
+
+    def sort_timelines(self, factor):
         if factor == "A-Z":
-            names = [thumbnail[0] for thumbnail in thumbnails]
+            names = [timeline.name for timeline in sess.query(Timeline).all()]
             sorted_names = self.merge_sort(names, False)
+            sorted_ids = [sess.query(Timeline).filter(Timeline.name == name).timeline_ID for name in sorted_names]
         elif factor == "Z-A":
-            names = [thumbnail[0] for thumbnail in thumbnails]
+            names = [timeline.name for timeline in sess.query(Timeline).all()]
             sorted_names = self.merge_sort(names, True)
+            sorted_ids = [sess.query(Timeline).filter(Timeline.name == name).timeline_ID for name in sorted_names]
         elif factor == "Recently modified":
             dates = [timeline.date_modified for timeline in sess.query(Timeline).all()]
             sorted_dates = self.merge_sort(dates, True)
+            sorted_ids = [sess.query(Timeline).filter(Timeline.date_modified == date).timeline_ID for date in sorted_dates]
+        return sorted_ids
 
     def merge_sort(self, items, reverse):
         length = len(items)
