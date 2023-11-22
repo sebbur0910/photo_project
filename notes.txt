@@ -9,3 +9,9 @@ https://www.plus2net.com/python/tkinter-blob-display.php
 ^takes the blob, need to use the IO module
 
 we will use blob: much better practice
+
+need to fix route around the application, particularily in going from upload photo back to customise timeline, etc
+
+prefills for customise timeline (using entry box insert method)
+new timeline saved intermediate as timeline_id = 999 (or some other large number)
+then allows for same prefill mechanism

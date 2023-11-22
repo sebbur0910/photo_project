@@ -5,6 +5,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 import io
 from controller import Database
+from tkinter.filedialog import askopenfile
+import re
+import datetime
 
 engine = create_engine('sqlite:///:memory:', echo=True)
 Base.metadata.create_all(engine)
@@ -248,20 +251,40 @@ class CustomiseTimeline(ctk.CTkFrame):
         self.save_button.grid(row=9, column=2, sticky="e")
 
 
-class PhotoGallery(ctk.CTkFrame):
+class PhotoGallery(ctk.CTkScrollableFrame):
     def __init__(self, root, master_filter):
-        ...
+        super().__init__(root)
+        self.root = root
+
+        if not master_filter:
+            title = "All Images"
+        else:
+            title = "Testing"
+
+        self.title_text = ctk.CTkLabel(self,
+                                       text=title,
+                                       font=("Arial Bold", 35),
+                                       pady=20
+                                       )
+
+        self.place()
+
+    def place(self):
+        self.title_text.grid(row=0, column=0, columnspan=6)
 
 
 class TimelineView(ctk.CTkFrame):
     def __init__(self, root):
         ...
 
+
 class ImportPhoto(ctk.CTkFrame):
 
-    def __init__(self, root):
+    def __init__(self, root, timeline_id=None):
         super().__init__(root)
         self.root = root
+        self.timeline_id = timeline_id
+        self.file_path = None
 
         self.title_text = ctk.CTkLabel(self,
                                        text="Import photo",
@@ -270,31 +293,59 @@ class ImportPhoto(ctk.CTkFrame):
                                        )
 
         self.date_taken_text = ctk.CTkLabel(self,
-                                      text="Date taken:",
-                                      font=("Arial", 20),
-                                      anchor="e"
-                                      )
+                                            text="Date taken:",
+                                            font=("Arial", 20),
+                                            anchor="e"
+                                            )
 
         self.date_taken_box = ctk.CTkEntry(self,
-                                     bg_color="grey",
-                                     width=300)
+                                           bg_color="grey",
+                                           width=300)
 
         self.caption_text = ctk.CTkLabel(self,
-                                             text="Caption:",
-                                             font=("Arial", 20),
-                                             anchor="e"
-                                             )
+                                         text="Caption:",
+                                         font=("Arial", 20),
+                                         anchor="e"
+                                         )
 
         self.caption_box = ctk.CTkEntry(self,
-                                            bg_color="grey",
-                                            width=300)
+                                        bg_color="grey",
+                                        width=300,)
 
         self.upload_button = ctk.CTkButton(self,
                                            text="Upload",
                                            font=("Arial Bold", 35),
                                            width=700,
-                                           height=300
-        )
+                                           height=300,
+                                           command=self.photo_upload)
+
+        self.save_button = ctk.CTkButton(self,
+                                         text="Save",
+                                         font=("Arial", 15),
+                                         corner_radius=3,
+                                         command=self.save)
+
+        self.back_button = ctk.CTkButton(self,
+                                         text="Back",
+                                         font=("Arial", 15),
+                                         corner_radius=3,
+                                         command=self.back)
+
+        self.date_not_good_box = ctk.CTkLabel(self,
+                                              text="Please enter date in format DD/MM/YYY",
+                                              text_color="red",
+                                              font=("Arial", 10))
+
+        self.photo_not_good_box = ctk.CTkLabel(self,
+                                               text="Please upload a photo before saving",
+                                               text_color="red",
+                                               font=("Arial", 15)
+                                               )
+
+        self.caption_not_good_box = ctk.CTkLabel(self,
+                                                 text="Please enter a caption before saving",
+                                                 text_color="red",
+                                                 font=("Arial", 10))
 
         self.place()
 
@@ -305,6 +356,46 @@ class ImportPhoto(ctk.CTkFrame):
         self.caption_text.grid(row=2, column=0, sticky="e", padx=10, pady=5)
         self.caption_box.grid(row=2, column=1)
         self.upload_button.grid(row=3, column=0, columnspan=3, padx=60, pady=60)
+        self.save_button.grid(row=4, column=2, pady=20)
+        self.back_button.grid(row=4, column=0, pady=20)
+
+    def photo_upload(self):
+        self.file_path = askopenfile(mode='r',
+                                     filetypes=[('Image Files', '*jpeg'), ('Image Files', '*jpg'),
+                                                ('Image Files', '*png')])
+
+    def save(self):
+        save_blocked = False
+        date_taken = self.date_taken_box.get()
+        caption = self.caption_box.get()
+        if not bool(re.match("[0123][1-9]\/[01][1-9]\/[0-9]{4}", date_taken)) or not date_taken:
+            self.date_not_good_box.grid(row=1, column=2)
+            save_blocked = True
+        else:
+            self.date_not_good_box.grid_forget()
+        if not self.file_path:
+            self.photo_not_good_box.grid(row=3, column=3)
+            save_blocked = True
+        else:
+            self.photo_not_good_box.grid_forget()
+        if not caption:
+            self.caption_not_good_box.grid(row=2, column=2)
+            save_blocked = True
+        else:
+            self.caption_not_good_box.grid_forget()
+        if not save_blocked:
+            [day, month, year] = date_taken.split("/")
+            date_taken = datetime.date(int(year), int(month), int(day))
+            database.upload_photo(self.file_path, caption, date_taken)
+
+            self.back()
+
+    def back(self):
+        if self.timeline_id:
+            self.root.show_frame("customise_timeline")
+        else:
+            self.root.show_frame("photo_gallery")
+
 
 
 gui = App()
