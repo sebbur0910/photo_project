@@ -22,15 +22,15 @@ class App(ctk.CTk):
         self.show_frame("homescreen")
         self.frames = None
 
-    def show_frame(self, current_frame):
+    def show_frame(self, current_frame, id=None):
         self.frames = {
             "homescreen": HomeScreen(self),
-            "add_timeline": CustomiseTimeline(self, True),
+            "add_timeline": CustomiseTimeline(self, 999),
             "photo_gallery": PhotoGallery(self, False),
             "timeline": TimelineView(self),
-            "customise_timeline": CustomiseTimeline(self, False),
+            "customise_timeline": CustomiseTimeline(self, id),
             "timeline_photos": PhotoGallery(self, True),
-            "timeline_new_photo": ImportPhoto(self)
+            "timeline_new_photo": ImportPhoto(self, id)
         }
         widgets = self.winfo_children()
         for widget in widgets:
@@ -106,13 +106,14 @@ class HomeScreen(ctk.CTkFrame):
 
 
 class CustomiseTimeline(ctk.CTkFrame):
-    def __init__(self, root, new: bool):
+    def __init__(self, root, timeline_id):
         super().__init__(root)
         self.root = root
-        if new:
+        self.timeline_id = timeline_id
+        if self.timeline_id == 999:
             title_text = "Create new timeline"
         else:
-            title_text = None
+            title_text = database.get_timeline_name(self.timeline_id)
 
         self.title_text = ctk.CTkLabel(self,
                                        text=title_text,
@@ -214,7 +215,26 @@ class CustomiseTimeline(ctk.CTkFrame):
                                          corner_radius=3,
                                          command=self.save)
 
+        self.insert_existing_values()
         self.place()
+
+    def insert_existing_values(self):
+        self.name_box.insert(index=0, string=database.get_timeline_name(self.timeline_id))
+        self.line_colour_box.insert(index=0, string=database.get_timeline_line_colour(self.timeline_id))
+        self.line_weight_box.insert(index=0, string=database.get_timeline_line_weight(self.timeline_id))
+        self.background_colour_box.insert(index=0, string=database.get_timeline_background_colour(self.timeline_id))
+        self.default_border_colour_box.insert(index=0, string=database.get_timeline_default_border_colour(self.timeline_id))
+        self.default_border_weight_box.insert(index=0, string=database.get_timeline_default_border_weight(self.timeline_id))
+    def save_timeline_to_database(self):
+        name = self.name_box.get()
+        line_colour = self.line_colour_box.get()
+        line_weight = self.line_weight_box.get()
+        background_colour = self.background_colour_box.get()
+        default_border_colour = self.default_border_colour_box.get()
+        default_border_weight = self.default_border_weight_box.get
+    # Need to make sure I'm not overwriting values where there is no box:
+        #individual setters :(
+        database.set_timeline(name, None, )
 
     def save(self):
         ...
@@ -228,7 +248,7 @@ class CustomiseTimeline(ctk.CTkFrame):
         self.root.show_frame("photo_gallery")
 
     def insert_new(self):
-        self.root.show_frame("timeline_new_photo")
+        self.root.show_frame("timeline_new_photo", self.timeline_id)
 
     def place(self):
         self.title_text.grid(row=0, column=1)
@@ -392,7 +412,7 @@ class ImportPhoto(ctk.CTkFrame):
 
     def back(self):
         if self.timeline_id:
-            self.root.show_frame("customise_timeline")
+            self.root.show_frame("customise_timeline", self.timeline_id)
         else:
             self.root.show_frame("photo_gallery")
 
