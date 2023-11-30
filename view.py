@@ -219,6 +219,8 @@ class CustomiseTimeline(ctk.CTkFrame):
         self.place()
 
     def insert_existing_values(self):
+        print("goooooooooooooooooooooooooooooordb")
+        print("\n\n" + database.get_timeline_name(self.timeline_id)+ "\n\n")
         self.name_box.insert(index=0, string=database.get_timeline_name(self.timeline_id))
         self.line_colour_box.insert(index=0, string=database.get_timeline_line_colour(self.timeline_id))
         self.line_weight_box.insert(index=0, string=database.get_timeline_line_weight(self.timeline_id))
@@ -231,10 +233,21 @@ class CustomiseTimeline(ctk.CTkFrame):
         line_weight = self.line_weight_box.get()
         background_colour = self.background_colour_box.get()
         default_border_colour = self.default_border_colour_box.get()
-        default_border_weight = self.default_border_weight_box.get
+        default_border_weight = self.default_border_weight_box.get()
     # Need to make sure I'm not overwriting values where there is no box:
         #individual setters :(
-        database.set_timeline(name, None, )
+        if name:
+            database.set_timeline_name(self.timeline_id, name)
+        if line_colour:
+            database.set_timeline_line_colour(self.timeline_id, line_colour)
+        if line_weight:
+            database.set_timeline_line_weight(self.timeline_id, line_weight)
+        if background_colour:
+            database.set_timeline_background_colour(self.timeline_id, background_colour)
+        if default_border_colour:
+            database.set_timeline_default_border_colour(self.timeline_id, default_border_colour)
+        if default_border_weight:
+            database.set_timeline_default_border_weight(self.timeline_id, default_border_weight)
 
     def save(self):
         ...
@@ -248,6 +261,7 @@ class CustomiseTimeline(ctk.CTkFrame):
         self.root.show_frame("photo_gallery")
 
     def insert_new(self):
+        self.save_timeline_to_database()
         self.root.show_frame("timeline_new_photo", self.timeline_id)
 
     def place(self):

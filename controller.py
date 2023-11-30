@@ -135,14 +135,85 @@ class Database:
 
     def set_timeline(self, name, thumbnail_photo_id, date_modified, background_photo_id, background_colour, line_colour,
                      line_weight, default_border_colour, default_border_weight):
-        timeline = Timeline(name=name if name, background_photo_ID=background_photo_id, background_colour=background_colour,
+        timeline = Timeline(name=name, background_photo_ID=background_photo_id, background_colour=background_colour,
                             line_colour=line_colour,
                             line_weight=line_weight, default_border_colour=default_border_colour,
                             default_border_weight=default_border_weight, thumbnail_photo_ID=thumbnail_photo_id,
                             date_modified=date_modified)
         sess.add(timeline)
 
-    def set_timeline_name
+    def set_timeline_name(self, id, name):
+        timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id)
+        if timeline:
+            timeline.update({Timeline.name:name})
+        else:
+            timeline = Timeline(name=name)
+            sess.add(timeline)
+
+    def set_timeline_thumbnail_photo_id(self, id, thumbnail_photo_id):
+        timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id)
+        if timeline:
+            timeline.update({Timeline.thumbnail_photo_ID:thumbnail_photo_id})
+        else:
+            timeline = Timeline(thumbnail_photo_ID=thumbnail_photo_id)
+            sess.add(timeline)
+
+    def set_timeline_date_modified(self, id, date_modified):
+        timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id)
+        if timeline:
+            timeline.update({Timeline.date_modified: date_modified})
+        else:
+            timeline = Timeline(date_modified=date_modified)
+            sess.add(timeline)
+
+    def set_timeline_background_photo_id(self, id, background_photo_id):
+        timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id)
+        if timeline:
+            timeline.update({Timeline.background_photo_ID: background_photo_id})
+        else:
+            timeline = Timeline(background_photo_ID=background_photo_id)
+            sess.add(timeline)
+
+    def set_timeline_background_colour(self, id, background_colour):
+        timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id)
+        if timeline:
+            timeline.update({Timeline.background_colour: background_colour})
+        else:
+            timeline = Timeline(background_colour=background_colour)
+            sess.add(timeline)
+
+    def set_timeline_line_colour(self, id, line_colour):
+        timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id)
+        if timeline:
+            timeline.update({Timeline.line_colour: line_colour})
+        else:
+            timeline = Timeline(line_colour=line_colour)
+            sess.add(timeline)
+
+    def set_timeline_line_weight(self, id, line_weight):
+        timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id)
+        if timeline:
+            timeline.update({"line_weight": line_weight})
+        else:
+            timeline = Timeline(line_weight=line_weight)
+            sess.add(timeline)
+
+    def set_timeline_default_border_colour(self, id, default_border_colour):
+        timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id)
+        if timeline:
+            timeline.update({Timeline.default_border_colour: default_border_colour})
+        else:
+            timeline = Timeline(default_border_colour=default_border_colour)
+            sess.add(timeline)
+
+    def set_timeline_default_border_weight(self, id, default_border_weight):
+        timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id)
+        if timeline:
+            timeline.update({"default_border_weight": default_border_weight})
+        else:
+            timeline = Timeline(default_border_weight=default_border_weight)
+            sess.add(timeline)
+
 
     def get_thumbnail(self, id):
         thumbnail_id = sess.query(Timeline).filter(Timeline.timeline_ID == id).first().thumbnail_id

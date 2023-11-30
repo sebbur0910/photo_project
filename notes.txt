@@ -15,3 +15,5 @@ need to fix route around the application, particularily in going from upload pho
 prefills for customise timeline (using entry box insert method)
 new timeline saved intermediate as timeline_id = 999 (or some other large number)
 then allows for same prefill mechanism
+
+getting the timeline name is returning nothing (demonstrated by goooooooooooob and then \n s)
