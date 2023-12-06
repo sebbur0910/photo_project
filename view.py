@@ -72,7 +72,7 @@ class HomeScreen(ctk.CTkFrame):
                                                image=self.my_image,
                                                command=self.add_new_timeline)
 
-        self.thumbnails = database.get_thumbnails()
+      #  self.thumbnails = database.get_thumbnails()
 
         self.place()
 
@@ -221,7 +221,7 @@ class CustomiseTimeline(ctk.CTkFrame):
     def insert_existing_values(self):
         print("goooooooooooooooooooooooooooooordb")
         print("\n\n" + database.get_timeline_name(self.timeline_id)+ "\n\n")
-        self.name_box.insert(index=0, string=database.get_timeline_name(self.timeline_id))
+        self.name_box.insert(index=1, string=database.get_timeline_name(self.timeline_id))
         self.line_colour_box.insert(index=0, string=database.get_timeline_line_colour(self.timeline_id))
         self.line_weight_box.insert(index=0, string=database.get_timeline_line_weight(self.timeline_id))
         self.background_colour_box.insert(index=0, string=database.get_timeline_background_colour(self.timeline_id))
@@ -229,6 +229,7 @@ class CustomiseTimeline(ctk.CTkFrame):
         self.default_border_weight_box.insert(index=0, string=database.get_timeline_default_border_weight(self.timeline_id))
     def save_timeline_to_database(self):
         name = self.name_box.get()
+        print(f"\n\nname: {name}\n\n")
         line_colour = self.line_colour_box.get()
         line_weight = self.line_weight_box.get()
         background_colour = self.background_colour_box.get()
@@ -236,6 +237,7 @@ class CustomiseTimeline(ctk.CTkFrame):
         default_border_weight = self.default_border_weight_box.get()
     # Need to make sure I'm not overwriting values where there is no box:
         #individual setters :(
+        print(f"\n\n\n\n\n\n self.timeline_id: {self.timeline_id} \n\n\n\n\n\n\n")
         if name:
             database.set_timeline_name(self.timeline_id, name)
         if line_colour:

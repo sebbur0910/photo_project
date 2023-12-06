@@ -111,10 +111,10 @@ class Timeline(Base):
 
     def __repr__(self):
         return f"Timeline(timeline_ID='{self.timeline_ID}'," \
-               f"name={self.name}), " \
+               f"name={self.name}, " \
                f"background_photo_ID={self.background_photo_ID}, " \
-               f"background_colour={self.background_colour})" \
+               f"background_colour={self.background_colour}" \
                f"line_colour={self.line_colour}, " \
                f"line_weight={self.line_weight}, " \
                f"default_border_colour={self.default_border_colour}, " \
-               f"default_border_weight={self.default_border_weight}, "
+               f"default_border_weight={self.default_border_weight}, )"

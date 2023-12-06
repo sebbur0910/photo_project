@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 import io
 import binascii
 
-engine = create_engine('sqlite:///:memory:', echo=True)
+engine = create_engine('sqlite:///database.sqlite', echo=False)
 Base.metadata.create_all(engine)
 sess = Session(engine)
 
@@ -52,7 +52,7 @@ class Database:
             if "date_taken" in kwargs:
                 photo.date_taken = kwargs.pop("date_taken")
 
-            sess.add(Photo())
+            sess.add(photo)
 
     def get_image(self, caption):
         plus_image_binary = sess.query(Photo).filter(Photo.caption == caption).first().data
@@ -64,14 +64,17 @@ class Database:
 
         for timeline_number in range(len(thumbnail_ids)):
             name = sess.query(Timeline)[timeline_number].name
-            photo_data = sess.query(Photo).filter(Photo.photo_ID == thumbnail_ids[timeline_number]).first().data()
-            photo_data = io.BytesIO(photo_data)
+            photo_data = sess.query(Photo).filter(Photo.photo_ID == thumbnail_ids[timeline_number]).first()
+            if photo_data:
+                photo_data = photo_data.data
+                photo_data = io.BytesIO(photo_data)
             return_list.append(name, photo_data)
 
         return return_list
 
     def get_timeline_name(self, id):
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id).first()
+        print("timeline: ",timeline)
         if timeline:
             return timeline.name
         else:
@@ -144,10 +147,13 @@ class Database:
 
     def set_timeline_name(self, id, name):
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id)
-        if timeline:
+        print(f"\n\ntimeline being set: {timeline}\n\n")
+        if timeline.first():
             timeline.update({Timeline.name:name})
+            sess.commit()
         else:
-            timeline = Timeline(name=name)
+            print("making a new one")
+            timeline = Timeline(timeline_ID=id, name=name)
             sess.add(timeline)
 
     def set_timeline_thumbnail_photo_id(self, id, thumbnail_photo_id):
