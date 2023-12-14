@@ -219,8 +219,6 @@ class CustomiseTimeline(ctk.CTkFrame):
         self.place()
 
     def insert_existing_values(self):
-        print("goooooooooooooooooooooooooooooordb")
-        print("\n\n" + database.get_timeline_name(self.timeline_id)+ "\n\n")
         self.name_box.insert(index=1, string=database.get_timeline_name(self.timeline_id))
         self.line_colour_box.insert(index=0, string=database.get_timeline_line_colour(self.timeline_id))
         self.line_weight_box.insert(index=0, string=database.get_timeline_line_weight(self.timeline_id))

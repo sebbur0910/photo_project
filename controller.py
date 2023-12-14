@@ -75,63 +75,63 @@ class Database:
     def get_timeline_name(self, id):
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id).first()
         print("timeline: ",timeline)
-        if timeline:
+        if timeline and timeline.name:
             return timeline.name
         else:
             return ""
 
     def get_timeline_thumbnail_photo_id(self, id):
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id).first()
-        if timeline:
+        if timeline and timeline.thumbnail_photo_ID:
             return timeline.thumbnail_photo_ID
         else:
             return ""
 
     def get_timeline_date_modified(self, id):
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id).first()
-        if timeline:
+        if timeline and timeline.date_modified:
             return timeline.date_modified
         else:
             return ""
 
     def get_timeline_background_photo_id(self, id):
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id).first()
-        if timeline:
+        if timeline and timeline.background_photo_ID:
             return timeline.background_photo_ID
         else:
             return ""
 
     def get_timeline_background_colour(self, id):
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id).first()
-        if timeline:
+        if timeline and timeline.background_colour:
             return timeline.background_colour
         else:
             return ""
 
     def get_timeline_line_colour(self, id):
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id).first()
-        if timeline:
+        if timeline and timeline.line_colour:
             return timeline.line_colour
         else:
             return ""
 
     def get_timeline_line_weight(self, id):
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id).first()
-        if timeline:
+        if timeline and timeline.line_weight:
             return timeline.line_weight
         else:
             return ""
 
     def get_timeline_default_border_colour(self, id):
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id).first()
-        if timeline:
+        if timeline and timeline.default_border_colour:
             return timeline.default_border_colour
         else:
             return ""
 
     def get_timeline_default_border_weight(self, id):
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id).first()
-        if timeline:
+        if timeline and timeline.default_border_weight:
             return timeline.default_border_weight
         else:
             return ""
@@ -147,12 +147,10 @@ class Database:
 
     def set_timeline_name(self, id, name):
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id)
-        print(f"\n\ntimeline being set: {timeline}\n\n")
         if timeline.first():
             timeline.update({Timeline.name:name})
             sess.commit()
         else:
-            print("making a new one")
             timeline = Timeline(timeline_ID=id, name=name)
             sess.add(timeline)
 
