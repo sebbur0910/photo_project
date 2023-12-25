@@ -8,9 +8,9 @@ from controller import Database
 from tkinter.filedialog import askopenfile
 import re
 import datetime
+from functools import partial
 
-engine = create_engine('sqlite:///:memory:', echo=True)
-Base.metadata.create_all(engine)
+
 database = Database()
 
 
@@ -29,8 +29,10 @@ class App(ctk.CTk):
             "photo_gallery": PhotoGallery(self, False),
             "timeline": TimelineView(self),
             "customise_timeline": CustomiseTimeline(self, id),
-            "timeline_photos": PhotoGallery(self, True),
-            "timeline_new_photo": ImportPhoto(self, id)
+            "timeline_photos": PhotoGallery(self, id),
+            "timeline_new_photo": ImportPhoto(self, timeline_id=id),
+            "view_photo": ImportPhoto(self, photo_id=id),
+            "photo_picker": PhotoPicker(self, timeline_id=id)
         }
         widgets = self.winfo_children()
         for widget in widgets:
@@ -70,6 +72,9 @@ class HomeScreen(ctk.CTkFrame):
 
         self.add_new_thumbnail = ctk.CTkButton(self,
                                                image=self.my_image,
+                                               width=self.my_image._size[0],
+                                               height=self.my_image._size[1],
+                                               text=None,
                                                command=self.add_new_timeline)
 
       #  self.thumbnails = database.get_thumbnails()
@@ -227,7 +232,6 @@ class CustomiseTimeline(ctk.CTkFrame):
         self.default_border_weight_box.insert(index=0, string=database.get_timeline_default_border_weight(self.timeline_id))
     def save_timeline_to_database(self):
         name = self.name_box.get()
-        print(f"\n\nname: {name}\n\n")
         line_colour = self.line_colour_box.get()
         line_weight = self.line_weight_box.get()
         background_colour = self.background_colour_box.get()
@@ -235,7 +239,6 @@ class CustomiseTimeline(ctk.CTkFrame):
         default_border_weight = self.default_border_weight_box.get()
     # Need to make sure I'm not overwriting values where there is no box:
         #individual setters :(
-        print(f"\n\n\n\n\n\n self.timeline_id: {self.timeline_id} \n\n\n\n\n\n\n")
         if name:
             database.set_timeline_name(self.timeline_id, name)
         if line_colour:
@@ -250,15 +253,18 @@ class CustomiseTimeline(ctk.CTkFrame):
             database.set_timeline_default_border_weight(self.timeline_id, default_border_weight)
 
     def save(self):
-        ...
+        self.timeline_id = database.make_blank_timeline()
+        self.save_timeline_to_database()
         # update database
         # go back to original screen (parameterised exit)
 
     def view_current(self):
-        self.root.show_frame("timeline_photos")
+        self.save_timeline_to_database()
+        self.root.show_frame("timeline_photos", self.timeline_id)
 
     def insert_existing(self):
-        self.root.show_frame("photo_gallery")
+        self.save_timeline_to_database()
+        self.root.show_frame("photo_picker", self.timeline_id)
 
     def insert_new(self):
         self.save_timeline_to_database()
@@ -286,14 +292,15 @@ class CustomiseTimeline(ctk.CTkFrame):
 
 
 class PhotoGallery(ctk.CTkScrollableFrame):
-    def __init__(self, root, master_filter):
+    def __init__(self, root, timeline_id=None):
         super().__init__(root)
         self.root = root
+        self.timeline_id = timeline_id
 
-        if not master_filter:
+        if not timeline_id:
             title = "All Images"
         else:
-            title = "Testing"
+            title = database.get_timeline_name(self.timeline_id)
 
         self.title_text = ctk.CTkLabel(self,
                                        text=title,
@@ -303,8 +310,40 @@ class PhotoGallery(ctk.CTkScrollableFrame):
 
         self.place()
 
+        photo_thumbnails_and_ids = database.get_photo_thumbnails_and_ids(self.timeline_id)
+
+        for photo in photo_thumbnails_and_ids:
+            image = ctk.CTkImage(Image.open(photo[0]))
+            button = ctk.CTkButton(self, image=image, text=None, command=partial(self.open_image, photo[1]))
+            button.pack()
+
+        self.back_button = ctk.CTkButton(self, text="Back", command=self.back)
+        self.back_button.pack()
+
+    def back(self):
+        if self.timeline_id:
+            self.root.show_frame("customise_timeline",self.timeline_id)
+        else:
+            self.root.show_frame("homescreen")
+    def open_image(self, id):
+        self.root.show_frame("view_photo", id)
+
     def place(self):
-        self.title_text.grid(row=0, column=0, columnspan=6)
+        self.title_text.pack()
+
+
+class PhotoPicker(PhotoGallery):
+    def __init__(self, root, timeline_id):
+        super().__init__(root)
+        self.timeline_id = timeline_id
+
+    def open_image(self, id):
+        if database.image_in_timeline(id, self.timeline_id):
+            database.remove_image_from_timeline(id, self.timeline_id)
+        database.add_image_to_timeline(id,self.timeline_id)
+
+    def back(self):
+        self.root.show_frame("customise_timeline", self.timeline_id)
 
 
 class TimelineView(ctk.CTkFrame):
@@ -314,11 +353,13 @@ class TimelineView(ctk.CTkFrame):
 
 class ImportPhoto(ctk.CTkFrame):
 
-    def __init__(self, root, timeline_id=None):
+    def __init__(self, root, timeline_id=None, photo_id=None):
         super().__init__(root)
         self.root = root
         self.timeline_id = timeline_id
+        self.photo_id = photo_id
         self.file_path = None
+
 
         self.title_text = ctk.CTkLabel(self,
                                        text="Import photo",
@@ -345,6 +386,7 @@ class ImportPhoto(ctk.CTkFrame):
         self.caption_box = ctk.CTkEntry(self,
                                         bg_color="grey",
                                         width=300,)
+
 
         self.upload_button = ctk.CTkButton(self,
                                            text="Upload",
@@ -381,6 +423,11 @@ class ImportPhoto(ctk.CTkFrame):
                                                  text_color="red",
                                                  font=("Arial", 10))
 
+        if self.photo_id:
+            self.date_taken_box.insert(index=0, string=database.get_photo_date_taken(self.photo_id))
+            self.caption_box.insert(index=0, string=database.get_photo_caption(photo_id))
+            self.show_image(self.photo_id)
+
         self.place()
 
     def place(self):
@@ -393,10 +440,22 @@ class ImportPhoto(ctk.CTkFrame):
         self.save_button.grid(row=4, column=2, pady=20)
         self.back_button.grid(row=4, column=0, pady=20)
 
+    def show_image(self, photo_id, filepath=None):
+        photo = database.get_image_from_id(photo_id)
+        if photo:
+            photo = ctk.CTkImage(light_image=Image.open(photo),
+                                 size=(150, 100))
+            ctk.CTkLabel(self,
+                      image=photo,
+                      ).grid()
+        elif filepath:
+            photo = ctk.CTkImage(light_image=Image.open(filepath))
+            ctk.CTkLabel(self,image=photo, text=None, width=100, height=100).grid()
     def photo_upload(self):
         self.file_path = askopenfile(mode='r',
                                      filetypes=[('Image Files', '*jpeg'), ('Image Files', '*jpg'),
                                                 ('Image Files', '*png')])
+        self.show_image(photo_id=None, filepath=self.file_path.name)
 
     def save(self):
         save_blocked = False
@@ -420,8 +479,8 @@ class ImportPhoto(ctk.CTkFrame):
         if not save_blocked:
             [day, month, year] = date_taken.split("/")
             date_taken = datetime.date(int(year), int(month), int(day))
-            database.upload_photo(self.file_path, caption, date_taken)
-
+            new_photo_id = database.upload_photo(self.file_path.name, caption, date_taken)
+            database.add_image_to_timeline(new_photo_id, self.timeline_id)
             self.back()
 
     def back(self):

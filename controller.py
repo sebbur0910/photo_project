@@ -53,10 +53,16 @@ class Database:
                 photo.date_taken = kwargs.pop("date_taken")
 
             sess.add(photo)
+            return photo.photo_ID
 
     def get_image(self, caption):
         plus_image_binary = sess.query(Photo).filter(Photo.caption == caption).first().data
         return io.BytesIO(plus_image_binary)
+
+    def get_image_from_id(self, id):
+        if sess.query(Photo).filter(Photo.photo_ID == id).first():
+            image_binary = sess.query(Photo).filter(Photo.photo_ID == id).first().data
+            return io.BytesIO(image_binary)
 
     def get_thumbnails(self):
         return_list = []
@@ -74,7 +80,6 @@ class Database:
 
     def get_timeline_name(self, id):
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id).first()
-        print("timeline: ",timeline)
         if timeline and timeline.name:
             return timeline.name
         else:
@@ -218,6 +223,11 @@ class Database:
             timeline = Timeline(default_border_weight=default_border_weight)
             sess.add(timeline)
 
+    def make_blank_timeline(self):
+        timeline = Timeline()
+        sess.add(timeline)
+        return timeline.timeline_ID
+
 
     def get_thumbnail(self, id):
         thumbnail_id = sess.query(Timeline).filter(Timeline.timeline_ID == id).first().thumbnail_id
@@ -267,4 +277,62 @@ class Database:
         with open(filepath, 'rb') as file:
             binary_data = file.read()
         # need to add extra matadata (resolved i think)
-        self.add_image(data=binary_data, caption=caption, date_taken=date_taken)
+        return self.add_image(data=binary_data, caption=caption, date_taken=date_taken)
+
+    def add_image_to_timeline(self, photo_id, timeline_id):
+        photo = sess.query(Photo).filter(Photo.photo_ID == photo_id).first()
+        timeline = sess.query(Timeline).filter(Timeline.timeline_ID == timeline_id).first()
+        if timeline:
+            timeline.photos_on_line.append(photo)
+
+    def remove_image_from_timeline(self, photo_id, timeline_id):
+        photo = sess.query(Photo).filter(Photo.photo_ID == photo_id).first()
+        timeline = sess.query(Timeline).filter(Timeline.timeline_ID == timeline_id).first()
+        timeline.photos_on_line.remove(photo)
+    def image_in_timeline(self, photo_id, timeline_id):
+        photo = sess.query(Photo).filter(Photo.photo_ID == photo_id).first()
+        timeline = sess.query(Timeline).filter(Timeline.timeline_ID == timeline_id).first()
+        return photo in timeline.photos_on_line
+
+    def get_photo_thumbnails_and_ids(self, timeline_id=None):
+        if not timeline_id:
+            photos = sess.query(Photo).all()
+        elif sess.query(Timeline).filter(Timeline.timeline_ID == timeline_id).first():
+            photos = sess.query(Timeline).filter(Timeline.timeline_ID == timeline_id).first().photos_on_line
+        else:
+            return []
+        return [[self.make_thumbnail(photo), photo.photo_ID] for photo in photos if photo]
+
+    def get_photo_caption(self, id):
+        photo = sess.query(Photo).filter(Photo.photo_ID == id).first()
+        if photo and photo.caption:
+            return photo.caption
+        else:
+            return ""
+
+    def get_photo_date_taken(self, id):
+        photo = sess.query(Photo).filter(Photo.photo_ID == id).first()
+        if photo and photo.date_taken:
+            return photo.date_taken
+        else:
+            return ""
+
+    def get_photo_num_uses(self, id):
+        photo = sess.query(Photo).filter(Photo.photo_ID == id).first()
+        if photo and photo.num_uses:
+            return photo.num_uses
+        else:
+            return ""
+
+    def make_thumbnail(self, photo):
+        photo = io.BytesIO(photo.data)
+        photo = Image.open(photo)
+        width, height = photo.size
+        if width > height:
+            photo = photo.resize((height, height))
+        else:
+            photo = photo.resize(width, width)
+        stream = io.BytesIO()
+        photo.save(stream, format='PNG')
+        return io.BytesIO(stream.getvalue())
+
