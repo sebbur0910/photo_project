@@ -19,3 +19,21 @@ then allows for same prefill mechanism
 getting the timeline name is returning nothing (demonstrated by goooooooooooob and then \n s)
 
 do an aggregation query
+
+when it pastes the date taken i need to put it back in a friendly format
+
+needs to make sure that it doesn't run into an error trying to sort no timelines
+
+Do validation
+need tp exc;ude 999 from thumbnail place
+getting an odd sql error: doesn't like the way im modifying the primary key whilst searching by it?
+
+delete toggle in the view/delete current
+
+have to change show_frame because as it is it runs all the __init__()s. very bad, very slow
+
+something is wrong with the date taken validation
+
+for eval: reduce runtime by reducing database queries and processing (e.g. not creating new thumbnails every single time)
+
+timeline sorting broken?
