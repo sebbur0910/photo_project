@@ -264,6 +264,11 @@ class CustomiseTimeline(ctk.CTkFrame):
                                                height=150,
                                                command=self.insert_new
                                                )
+        self.back_button = ctk.CTkButton(self,
+                                         text="Back",
+                                         font=("Arial", 15),
+                                         corner_radius=3,
+                                         command=self.back)
 
         self.save_button = ctk.CTkButton(self,
                                          text="Save",
@@ -315,9 +320,17 @@ class CustomiseTimeline(ctk.CTkFrame):
         database.update_modified(self.timeline_id)
         if self.timeline_id == 999:
             database.transfer_to_new_timeline()
-        self.root.show_frame("homescreen")
+            self.root.show_frame("homescreen")
+        else:
+            self.root.show_frame("timeline", self.timeline_id)
         # update database
         # go back to original screen (parameterised exit)
+
+    def back(self):
+        if self.timeline_id == 999:
+            self.root.show_frame("homescreen")
+        else:
+            self.root.show_frame("timeline", self.timeline_id)
 
     def view_current(self):
         self.save_timeline_to_database()
@@ -350,6 +363,7 @@ class CustomiseTimeline(ctk.CTkFrame):
         self.insert_existing_button.grid(row=8, column=1, pady=10, padx=20)
         self.insert_new_button.grid(row=8, column=2, pady=10, padx=20)
         self.save_button.grid(row=9, column=2, sticky="e")
+        self.back_button.grid(row=9, column=0)
 
 
 class PhotoGallery(ctk.CTkScrollableFrame):
