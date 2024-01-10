@@ -178,7 +178,7 @@ class CustomiseTimeline(ctk.CTkFrame):
                                        )
 
         self.name_text = ctk.CTkLabel(self,
-                                      text="Name:",
+                                      text="Name (mandatory):",
                                       font=("Arial", 20),
                                       anchor="e"
                                       )
@@ -188,7 +188,7 @@ class CustomiseTimeline(ctk.CTkFrame):
                                      width=300)
 
         self.line_colour_text = ctk.CTkLabel(self,
-                                             text="Line colour:",
+                                             text="Line colour (default: black):",
                                              font=("Arial", 20),
                                              anchor="e"
                                              )
@@ -198,7 +198,7 @@ class CustomiseTimeline(ctk.CTkFrame):
                                             width=300)
 
         self.line_weight_text = ctk.CTkLabel(self,
-                                             text="Line weight:",
+                                             text="Line weight (default: 3):",
                                              font=("Arial", 20),
                                              anchor="e"
                                              )
@@ -208,7 +208,7 @@ class CustomiseTimeline(ctk.CTkFrame):
                                             width=300)
 
         self.default_border_colour_text = ctk.CTkLabel(self,
-                                                       text="Default border colour:",
+                                                       text="Border colour (default: black):",
                                                        font=("Arial", 20),
                                                        anchor="e"
                                                        )
@@ -218,7 +218,7 @@ class CustomiseTimeline(ctk.CTkFrame):
                                                       width=300)
 
         self.default_border_weight_text = ctk.CTkLabel(self,
-                                                       text="Default border weight:",
+                                                       text="Border weight (default: 1):",
                                                        font=("Arial", 20),
                                                        anchor="e"
                                                        )
@@ -228,7 +228,7 @@ class CustomiseTimeline(ctk.CTkFrame):
                                                       width=300)
 
         self.background_colour_text = ctk.CTkLabel(self,
-                                                   text="Background colour:",
+                                                   text="Background colour (default: white):",
                                                    font=("Arial", 20),
                                                    anchor="e"
                                                    )
@@ -275,7 +275,6 @@ class CustomiseTimeline(ctk.CTkFrame):
                                          font=("Arial", 15),
                                          corner_radius=3,
                                          command=self.save)
-
         self.insert_existing_values()
         self.place()
 
@@ -302,14 +301,24 @@ class CustomiseTimeline(ctk.CTkFrame):
             database.set_timeline_name(self.timeline_id, name)
         if line_colour:
             database.set_timeline_line_colour(self.timeline_id, line_colour)
+        else:
+            database.set_timeline_line_colour(self.timeline_id, "black")
         if line_weight:
             database.set_timeline_line_weight(self.timeline_id, line_weight)
+        else:
+            database.set_timeline_line_weight(self.timeline_id, 3)
         if background_colour:
             database.set_timeline_background_colour(self.timeline_id, background_colour)
+        else:
+            database.set_timeline_background_colour(self.timeline_id, "white")
         if default_border_colour:
             database.set_timeline_default_border_colour(self.timeline_id, default_border_colour)
+        else:
+            database.set_timeline_default_border_colour(self.timeline_id, "black")
         if default_border_weight:
             database.set_timeline_default_border_weight(self.timeline_id, default_border_weight)
+        else:
+            database.set_timeline_default_border_weight(self.timeline_id, 1)
 
     def save(self):
         if not database.has_photos(self.timeline_id):
