@@ -57,6 +57,16 @@ class Database:
             sess.commit()
             return photo.photo_ID
 
+    def set_photo_caption(self, photo_id, caption):
+        photo = sess.query(Photo).filter(Photo.photo_ID == photo_id).first()
+        photo.caption = caption
+        sess.commit()
+
+    def set_photo_date_taken(self, photo_id, date_taken):
+        photo = sess.query(Photo).filter(Photo.photo_ID == photo_id).first()
+        photo.date_taken = date_taken
+        sess.commit()
+
     def get_image(self, caption):
         plus_image = sess.query(Photo).filter(Photo.caption == caption).first()
         if plus_image:

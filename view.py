@@ -460,7 +460,7 @@ class TimelineView(ctk.CTkFrame):
         self.line_weight = database.get_timeline_line_weight(timeline_id)
         self.default_border_colour = database.get_timeline_default_border_colour(timeline_id)
         self.default_border_weight = database.get_timeline_default_border_weight(timeline_id)
-
+        self.text_colour = self.decide_text_colour()
         self.screen_height = self.root.winfo_screenheight()
         self.screen_width = self.root.winfo_screenwidth()
 
@@ -506,13 +506,22 @@ class TimelineView(ctk.CTkFrame):
 
         #  self.test_button.place(relx=0.5, rely=0)
 
+    def decide_text_colour(self):
+        if self.background_colour.lower() == "white":
+            return "black"
+        elif self.background_colour.lower() == "grey":
+            return "blue"
+        elif self.background_colour.lower() == "black":
+            return "white"
+        else:
+            return "grey"
     def zoom(self):
         self.canvas.pack_forget()
         self.place_canvas(3)
 
     def place_canvas(self, scale: int = 1):
         self.canvas = ctk.CTkCanvas(self, width=self.screen_width,
-                                    height=self.screen_height, background=self.background_colour,
+                                    height=self.screen_height-200, background=self.background_colour,
                                     xscrollcommand=self.scrollbar.set,
                                     scrollregion=(-5000 * scale, self.screen_height, 5000 * scale, 0))
         self.canvas.create_polygon((-5000 * scale, self.screen_height / 2 - self.line_weight * 5),
@@ -552,8 +561,10 @@ class TimelineView(ctk.CTkFrame):
 
         for marker in dates:
             self.label = ctk.CTkLabel(self.canvas,
-                                      text=marker[0])
+                                      text=marker[0],
+                                      text_color=self.text_colour)
             self.canvas.create_window(marker[1], self.screen_height / 2 - 50, window=self.label)
+            self.canvas.create_line(marker[1], self.screen_height / 2 - 50, marker[1], self.screen_height / 2 - self.line_weight*5, width=self.line_weight, fill=self.text_colour)
 
         # size=(100, 100))
 
@@ -587,9 +598,13 @@ class ImportPhoto(ctk.CTkScrollableFrame):
             database.add_image(from_default_set="tick")
         self.tick = database.get_image("tick")
         self.temp_tags = []
+        if self.photo_id:
+            title = "View photo"
+        else:
+            title = "Import photo"
 
         self.title_text = ctk.CTkLabel(self,
-                                       text="Import photo",
+                                       text=title,
                                        font=("Arial Bold", 35),
                                        pady=20
                                        )
@@ -649,16 +664,18 @@ class ImportPhoto(ctk.CTkScrollableFrame):
                                                  text_color="red",
                                                  font=("Arial", 10))
 
-        if self.photo_id:
-            self.date_taken_box.insert(index=0, string=database.get_photo_date_taken(self.photo_id))
-            self.caption_box.insert(index=0, string=database.get_photo_caption(photo_id))
-            self.show_image(self.photo_id)
 
+        self.tag_entry_label = ctk.CTkLabel(self, text="Tag name: ")
+        self.tag_colour_label = ctk.CTkLabel(self, text="Tag colour: ")
         self.tag_entry = ctk.CTkEntry(self)
         self.tag_colour_entry = ctk.CTkEntry(self)
         self.add_tag_button = ctk.CTkButton(self, text="Add tag", command=self.add_tag)
 
         self.place()
+        if self.photo_id:
+            self.date_taken_box.insert(index=0, string=database.get_photo_date_taken(self.photo_id))
+            self.caption_box.insert(index=0, string=database.get_photo_caption(photo_id))
+            self.show_image(self.photo_id)
 
     def add_tag(self):
         tag_name = self.tag_entry.get()
@@ -681,7 +698,9 @@ class ImportPhoto(ctk.CTkScrollableFrame):
         self.upload_button.grid(row=3, column=0, columnspan=3, padx=60, pady=60)
         self.save_button.grid(row=4, column=2, pady=20)
         self.back_button.grid(row=4, column=0, pady=20)
+        self.tag_entry_label.grid()
         self.tag_entry.grid()
+        self.tag_colour_label.grid()
         self.tag_colour_entry.grid()
         self.add_tag_button.grid()
         self.place_tags()
@@ -726,12 +745,14 @@ class ImportPhoto(ctk.CTkScrollableFrame):
         if photo:
             photo = ctk.CTkImage(light_image=Image.open(photo),
                                  size=(150, 100))
+            self.upload_button.grid_forget()
             ctk.CTkLabel(self,
-                         image=photo,
-                         ).grid()
+                         image=photo, text=""
+                         ).grid(row=3, column=0, columnspan=3, padx=60, pady=60)
         elif filepath:
             photo = ctk.CTkImage(light_image=Image.open(filepath))
-            ctk.CTkLabel(self, image=photo, text=None, width=100, height=100).grid()
+            self.upload_button.grid_forget()
+            ctk.CTkLabel(self, image=photo, text="", width=100, height=100).grid(row=3, column=0, columnspan=3, padx=60, pady=60)
 
     def photo_upload(self):
         self.file_path = askopenfile(mode='r',
@@ -743,12 +764,12 @@ class ImportPhoto(ctk.CTkScrollableFrame):
         save_blocked = False
         date_taken = self.date_taken_box.get()
         caption = self.caption_box.get()
-        if not bool(re.match("[0123][1-9]/[01][1-9]/[0-9]{4}", date_taken)) or not date_taken:
+        if not bool(re.match("[0123][0-9]/[01][0-9]/[0-9]{4}", date_taken)) or not date_taken:
             self.date_not_good_box.grid(row=1, column=2)
             save_blocked = True
         else:
             self.date_not_good_box.grid_forget()
-        if not self.file_path:
+        if not self.file_path and not self.photo_id:
             self.photo_not_good_box.grid(row=3, column=3)
             save_blocked = True
         else:
@@ -761,8 +782,12 @@ class ImportPhoto(ctk.CTkScrollableFrame):
         if not save_blocked:
             [day, month, year] = date_taken.split("/")
             date_taken = datetime.date(int(year), int(month), int(day))
-            new_photo_id = database.upload_photo(self.file_path.name, caption, date_taken)
-            database.add_image_to_timeline(new_photo_id, self.timeline_id)
+            if not self.photo_id:
+                new_photo_id = database.upload_photo(self.file_path.name, caption, date_taken)
+                database.add_image_to_timeline(new_photo_id, self.timeline_id)
+            else:
+                database.set_photo_caption(self.photo_id, caption)
+                database.set_photo_date_taken(self.photo_id, date_taken)
             self.back()
 
     def back(self):
