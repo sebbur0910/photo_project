@@ -32,7 +32,7 @@ class App(ctk.CTk):
 
     def __init__(self):
         super().__init__()
-
+        self.geometry("{0}x{1}+0+0".format(self.winfo_screenwidth(), self.winfo_screenheight()-100))
         self.show_frame("homescreen")
         self.frames = None
 
@@ -85,6 +85,11 @@ class HomeScreen(ctk.CTkFrame):
         plus_image = database.get_image("plus")
         self.my_image = ctk.CTkImage(light_image=Image.open(plus_image),
                                      size=(150, 100))
+        if not database.get_image("images"):
+            database.add_image(from_default_set="images")
+        images_image = database.get_image("images")
+        self.my_image_2 = ctk.CTkImage(light_image=Image.open(images_image),
+                                     size=(150, 100))
         #      self.configure(background="white")
         #     self.title("Home")
 
@@ -111,7 +116,8 @@ class HomeScreen(ctk.CTkFrame):
                                                command=self.add_new_timeline)
 
         self.image_gallery_button = ctk.CTkButton(self,
-                                                  text="Image Gallery",
+                                                  text="",
+                                                  image = self.my_image_2,
                                                   command=self.open_images)
 
         #  self.thumbnails = database.get_thumbnails()
@@ -500,6 +506,11 @@ class TimelineView(ctk.CTkFrame):
                                          text="",
                                          image=self.home_image,
                                          command=partial(self.root.show_frame, "homescreen"))
+        self.zoom_combobox = ctk.CTkComboBox(self,
+                                             values=["50%", "100%", "150%", "200%", "250%", "300%", "1000%"],
+                                             command=self.zoom_command,
+                                             )
+        self.zoom_combobox.set("100%")
         self.edit_button.pack(side="bottom")
         self.zoom_button.pack(side="bottom")
         self.home_button.pack(side="bottom")
@@ -516,8 +527,17 @@ class TimelineView(ctk.CTkFrame):
         else:
             return "grey"
     def zoom(self):
+        try:
+            self.zoom_combobox.pack_info()
+            self.zoom_combobox.pack_forget()
+
+        except:
+            self.zoom_combobox.pack(side="top")
+
+    def zoom_command(self, zoom):
+        zoom = int(zoom[:-1])/100
         self.canvas.pack_forget()
-        self.place_canvas(3)
+        self.place_canvas(zoom)
 
     def place_canvas(self, scale: int = 1):
         self.canvas = ctk.CTkCanvas(self, width=self.screen_width,
@@ -569,7 +589,7 @@ class TimelineView(ctk.CTkFrame):
         # size=(100, 100))
 
         self.scrollbar.configure(command=self.canvas.xview)
-        self.canvas.pack()
+        self.canvas.place(x=0, y=0)
 
     def get_free_y_coord(self):
         y = 50
