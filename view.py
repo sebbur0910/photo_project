@@ -71,6 +71,8 @@ class App(ctk.CTk):
             frame_to_show = ImportPhoto(self, photo_id=id, timeline_id=secondary_id)
         elif current_frame == "photo_picker":
             frame_to_show = PhotoPicker(self, timeline_id=id)
+        elif current_frame == "new_photo":
+            frame_to_show = ImportPhoto(self)
         frame_to_show.pack(expand=True, fill=ctk.BOTH)
     #   frame_to_show.set_up()
 
@@ -412,9 +414,17 @@ class PhotoGallery(ctk.CTkScrollableFrame):
                                    border_width=0)
             button.grid(column=count%5, row=count//5+1)
             count+=1
-
+        if not database.get_image("plus"):
+            database.add_image(from_default_set="plus")
+        plus = database.get_image("plus")
+        self.pencil_image = ctk.CTkImage(light_image=Image.open(plus))
+        self.root.add_image_button = ctk.CTkButton(self, image=self.pencil_image, command=self.add_image, text="")
+        self.root.add_image_button.place(x=300, y=300)
         self.back_button = ctk.CTkButton(self, text="Back", command=self.back)
         self.back_button.grid(columnspan=5)
+
+    def add_image(self):
+        self.root.show_frame("new_photo")
 
     def back(self):
         if self.timeline_id:
@@ -805,6 +815,8 @@ class ImportPhoto(ctk.CTkScrollableFrame):
             if not self.photo_id:
                 new_photo_id = database.upload_photo(self.file_path.name, caption, date_taken)
                 database.add_image_to_timeline(new_photo_id, self.timeline_id)
+            elif not (self.photo_id or self.timeline_id):
+                database.upload_photo(self.file_path.name, caption, date_taken)
             else:
                 database.set_photo_caption(self.photo_id, caption)
                 database.set_photo_date_taken(self.photo_id, date_taken)
