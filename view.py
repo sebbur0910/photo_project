@@ -376,6 +376,8 @@ class CustomiseTimeline(ctk.CTkFrame):
 
 class PhotoGallery(ctk.CTkScrollableFrame):
     def __init__(self, root, timeline_id=None):
+        self.active_tags = []
+        self.filter_placed = False
         super().__init__(root)
         self.root = root
         if not database.get_image("tick"):
@@ -396,15 +398,40 @@ class PhotoGallery(ctk.CTkScrollableFrame):
                                        font=("Arial Bold", 35),
                                        pady=20
                                        )
-        self.image_frame = ctk.CTkScrollableFrame(self, width=self.winfo_screenwidth(), height=self.winfo_screenheight()*0.7)
+        self.image_frame = ctk.CTkScrollableFrame(self, width=self.winfo_screenwidth(),
+                                                  height=self.winfo_screenheight()*0.7)
 
         self.place()
 
+        self.place_images()
+        if not database.get_image("plus"):
+            database.add_image(from_default_set="plus")
+        plus = database.get_image("plus")
+        self.filter_button = ctk.CTkButton(self, text="Filter", command=self.place_filter)
+        self.filter_button.grid(column=0, row=1)
+        self.filter = ctk.CTkScrollableFrame(self, bg_color="blue", fg_color="blue")
+        self.pencil_image = ctk.CTkImage(light_image=Image.open(plus))
+        self.add_image_button = ctk.CTkButton(self, image=self.pencil_image, command=self.add_image, text="")
+        self.image_frame.grid(columnspan=5, sticky="ew")
+        self.add_image_button.grid(column=4, row=2)
+        self.back_button = ctk.CTkButton(self, text="Back", command=self.back)
+        self.back_button.grid(columnspan=5)
+        self.filter_save = ctk.CTkButton(self.filter, text="Save", command=self.filter_save_command)
+
+    def filter_save_command(self):
+        for widget in self.image_frame.winfo_children():
+            widget.grid_forget()
+        self.place_images()
+        self.place_filter()
+
+    def place_images(self):
         photo_thumbnails_and_ids = database.get_photo_thumbnails_and_ids(self.timeline_id)
-        count=0
+        if self.active_tags:
+            photo_thumbnails_and_ids = database.filter_thumbnails_and_ids(photo_thumbnails_and_ids, self.active_tags)
+        count = 0
         for photo in photo_thumbnails_and_ids:
             image = ctk.CTkImage(Image.open(photo[0]))
-            image.configure(size=[(self.winfo_screenwidth()-50)/5, (self.winfo_screenwidth()-50)/5])
+            image.configure(size=[(self.winfo_screenwidth() - 50) / 5, (self.winfo_screenwidth() - 50) / 5])
             button = ctk.CTkButton(self.image_frame,
                                    image=image,
                                    text=None,
@@ -416,24 +443,16 @@ class PhotoGallery(ctk.CTkScrollableFrame):
                                    round_height_to_even_numbers=False,
                                    corner_radius=0,
                                    border_width=0)
-            button.grid(column=count%5, row=count//5+1)
-            count+=1
-        if not database.get_image("plus"):
-            database.add_image(from_default_set="plus")
-        plus = database.get_image("plus")
-        self.filter_button = ctk.CTkButton(self, text="Filter", command=self.place_filter)
-        self.filter_button.grid(column=0, row=1)
-        self.filter = ctk.CTkScrollableFrame(self)
-        self.pencil_image = ctk.CTkImage(light_image=Image.open(plus))
-        self.add_image_button = ctk.CTkButton(self, image=self.pencil_image, command=self.add_image, text="")
-        self.image_frame.grid(columnspan=5, sticky="ew")
-        self.add_image_button.grid(column=4, row=2)
-        self.back_button = ctk.CTkButton(self, text="Back", command=self.back)
-        self.back_button.grid(columnspan=5)
+            button.grid(column=count % 5, row=count // 5 + 1)
+            count += 1
 
     def place_filter(self):
-        self.filter.grid(column=1, row=1)
-        self.place_tags()
+        if self.filter_placed:
+            self.filter.grid_forget()
+        else:
+            self.filter.grid(column=1, row=1)
+            self.place_tags()
+        self.filter_placed = not self.filter_placed
 
     def forget_tags(self):
         for widget in self.filter.winfo_children():
@@ -445,17 +464,27 @@ class PhotoGallery(ctk.CTkScrollableFrame):
         tags = database.get_tags()
         self.tick_image = ctk.CTkImage(light_image=Image.open(self.tick))
         for tag in tags:
+            if tag in self.active_tags:
+                image = self.tick_image
+            else:
+                image = None
             tag_button = ctk.CTkButton(self.filter,
                                      #  image=image,
                                        text=tag.name,
                                        command=partial(self.toggle_tag, tag),
+                                       image = image,
                                        bg_color=tag.colour,
                                        fg_color=tag.colour,
                                        )
             tag_button.grid()
+        self.filter_save.grid()
 
     def toggle_tag(self, tag):
-        ...
+        if tag in self.active_tags:
+            self.active_tags.remove(tag)
+        else:
+            self.active_tags.append(tag)
+        self.place_tags()
     def fill_filter_frame(self):
         ...
 

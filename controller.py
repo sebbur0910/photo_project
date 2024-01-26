@@ -440,6 +440,15 @@ class Database:
             return []
         return [[self.make_thumbnail(photo), photo.photo_ID] for photo in photos if photo]
 
+    def filter_thumbnails_and_ids(self, thumbnails_and_ids, tags):
+        return_list = []
+        for item in thumbnails_and_ids:
+            photo = sess.query(Photo).filter(Photo.photo_ID == item[1]).first()
+            for tag in tags:
+                if tag in photo.tags:
+                    return_list.append(item)
+        return return_list
+
     def get_photos_and_ids(self, timeline_id=None):
         if not timeline_id:
             photos = sess.query(Photo).all()
