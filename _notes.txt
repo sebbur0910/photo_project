@@ -40,5 +40,6 @@ timeline sorting broken?
 
 when sorting photos that are in a certain timeline, need to create a join sql query which joins timeline_photos to photos and then sorts by timeline id and then orders by the factor
 vut how do i query a table?
+Session.query(Base.metadata.tables['myTable']).all()
 defuats need to be made
 i think still problem with timeline 999 nad its photos
