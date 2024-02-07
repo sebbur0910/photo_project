@@ -366,6 +366,7 @@ class Database:
         timeline.date_modified = datetime.datetime.now()
 
     def sort_timelines(self, factor):
+        sorted_ids = None
         if factor == "A-Z":
             names = [timeline.name for timeline in sess.query(Timeline).filter(Timeline.timeline_ID != 999).all()]
             sorted_names = self.merge_sort(names, True)
@@ -431,11 +432,17 @@ class Database:
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == timeline_id).first()
         return photo in timeline.photos_on_line
 
-    def get_photo_thumbnails_and_ids(self, timeline_id=None):
+    def get_photo_thumbnails_and_ids(self, timeline_id=None, sort_factor=None):
+        if sort_factor == "Most used":
+            factor = Photo.num_uses
+        elif sort_factor == "Date taken":
+            factor = Photo.date_taken
+        else:
+            factor=None
         if not timeline_id:
-            photos = sess.query(Photo).filter(Photo.date_taken != None).all()
+            photos = sess.query(Photo).filter(Photo.date_taken != None).order_by(factor).all()
         elif sess.query(Timeline).filter(Timeline.timeline_ID == timeline_id).first():
-            photos = sess.query(Timeline).filter(Timeline.timeline_ID == timeline_id).first().photos_on_line
+            photo_ids = sess.query(Timeline).filter(Timeline.timeline_ID == timeline_id).first().photos_on_line
         else:
             return []
         return [[self.make_thumbnail(photo), photo.photo_ID] for photo in photos if photo]

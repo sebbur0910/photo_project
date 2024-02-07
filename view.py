@@ -123,8 +123,15 @@ class HomeScreen(ctk.CTkFrame):
                                                   command=self.open_images)
 
         #  self.thumbnails = database.get_thumbnails()
-
+        self.configure_grid()
         self.place()
+
+    def configure_grid(self):
+        self.grid_columnconfigure(0, minsize=self.winfo_screenwidth()/5)
+        self.grid_columnconfigure(1, minsize=self.winfo_screenwidth() / 5)
+        self.grid_columnconfigure(2, minsize=self.winfo_screenwidth() / 5)
+        self.grid_columnconfigure(3, minsize=self.winfo_screenwidth() / 5)
+        self.grid_columnconfigure(4, minsize=self.winfo_screenwidth() / 5)
 
     def place(self):
         self.title_text.grid(row=0, column=0, columnspan=3)
@@ -403,13 +410,23 @@ class PhotoGallery(ctk.CTkScrollableFrame):
 
         self.place()
 
-        self.place_images()
+        self.place_images(database.get_photo_thumbnails_and_ids(timeline_id=self.timeline_id))
         if not database.get_image("plus"):
             database.add_image(from_default_set="plus")
         plus = database.get_image("plus")
         self.filter_button = ctk.CTkButton(self, text="Filter", command=self.place_filter)
         self.filter_button.grid(column=0, row=1)
         self.filter = ctk.CTkScrollableFrame(self, bg_color="blue", fg_color="blue")
+        self.sort_by_label = ctk.CTkLabel(self,
+                                          text="Sort by:",
+                                          font=("Arial", 13))
+
+        self.sorter = ctk.CTkComboBox(self,
+                                      values=["Photo ID", "Most used", "Date taken", "Custom (drag)"],
+                                      command=self.sort_request
+                                      )
+        self.sort_by_label.grid(column=1, row=1)
+        self.sorter.grid(column=2, row=1)
         self.pencil_image = ctk.CTkImage(light_image=Image.open(plus))
         self.add_image_button = ctk.CTkButton(self, image=self.pencil_image, command=self.add_image, text="")
         self.image_frame.grid(columnspan=5, sticky="ew")
@@ -421,11 +438,19 @@ class PhotoGallery(ctk.CTkScrollableFrame):
     def filter_save_command(self):
         for widget in self.image_frame.winfo_children():
             widget.grid_forget()
-        self.place_images()
+        self.place_images(database.get_photo_thumbnails_and_ids(timeline_id=self.timeline_id))
         self.place_filter()
 
-    def place_images(self):
-        photo_thumbnails_and_ids = database.get_photo_thumbnails_and_ids(self.timeline_id)
+    def sort_request(self, factor):
+        self.forget_images()
+        sorted_items = database.get_photo_thumbnails_and_ids(sort_factor=factor, timeline_id=self.timeline_id)
+        self.place_images(sorted_items)
+
+    def forget_images(self):
+        for widget in self.image_frame.winfo_children():
+            widget.grid_forget()
+    def place_images(self, photo_thumbnails_and_ids):
+   #     photo_thumbnails_and_ids = database.get_photo_thumbnails_and_ids(self.timeline_id)
         if self.active_tags:
             photo_thumbnails_and_ids = database.filter_thumbnails_and_ids(photo_thumbnails_and_ids, self.active_tags)
         count = 0
