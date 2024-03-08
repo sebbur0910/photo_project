@@ -43,3 +43,12 @@ vut how do i query a table?
 Session.query(Base.metadata.tables['myTable']).all()
 defuats need to be made
 i think still problem with timeline 999 nad its photos
+
+on laptop winfo_screenheight and width give wrong values: work when whacked back into resize manager, but not for placing widgets.
+works for image gallery but not canvas or homescreen??
+can't zoom multiple times: combobox does not return.
+
+cannot add tags to uncreated photo
+date doesn't work with pre 2000?
+-see ed sheeran timeline
+its giving me too many months and dates too frequenctly

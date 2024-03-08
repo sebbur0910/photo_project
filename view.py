@@ -32,7 +32,9 @@ class App(ctk.CTk):
 
     def __init__(self):
         super().__init__()
-        self.geometry("{0}x{1}+0+0".format(self.winfo_screenwidth(), self.winfo_screenheight()-100))
+        print(f"original screenwidth: {self.winfo_screenwidth()}")
+        print(f"dimensions: {self.winfo_screenwidth()}x{self.winfo_screenheight()}")
+        self.geometry("{0}x{1}+0+0".format(self.winfo_screenwidth(), self.winfo_screenheight() - 100))
         self.show_frame("homescreen")
         self.frames = None
 
@@ -91,7 +93,7 @@ class HomeScreen(ctk.CTkFrame):
             database.add_image(from_default_set="images")
         images_image = database.get_image("images")
         self.my_image_2 = ctk.CTkImage(light_image=Image.open(images_image),
-                                     size=(150, 100))
+                                       size=(150, 100))
         #      self.configure(background="white")
         #     self.title("Home")
 
@@ -112,14 +114,14 @@ class HomeScreen(ctk.CTkFrame):
 
         self.add_new_thumbnail = ctk.CTkButton(self,
                                                image=self.my_image,
-                                               width=self.my_image._size[0],
-                                               height=self.my_image._size[1],
+                                           #    width=self.my_image._size[0],
+                                            #   height=self.my_image._size[1],
                                                text=None,
                                                command=self.add_new_timeline)
 
         self.image_gallery_button = ctk.CTkButton(self,
                                                   text="",
-                                                  image = self.my_image_2,
+                                                  image=self.my_image_2,
                                                   command=self.open_images)
 
         #  self.thumbnails = database.get_thumbnails()
@@ -127,17 +129,17 @@ class HomeScreen(ctk.CTkFrame):
         self.place()
 
     def configure_grid(self):
-        self.grid_columnconfigure(0, minsize=self.winfo_screenwidth()/5)
+        self.grid_columnconfigure(0, minsize=self.winfo_screenwidth() / 5)
         self.grid_columnconfigure(1, minsize=self.winfo_screenwidth() / 5)
         self.grid_columnconfigure(2, minsize=self.winfo_screenwidth() / 5)
         self.grid_columnconfigure(3, minsize=self.winfo_screenwidth() / 5)
         self.grid_columnconfigure(4, minsize=self.winfo_screenwidth() / 5)
 
     def place(self):
-        self.title_text.grid(row=0, column=0, columnspan=3)
+        self.title_text.grid(row=0, column=1, columnspan=3, sticky="ew")
         self.sort_by_label.grid(row=1, column=0)
         self.sorter.grid(row=1, column=1)
-        self.add_new_thumbnail.grid(row=2, column=1)
+        self.add_new_thumbnail.grid(row=2, column=0)
         self.sort_request("A-Z")
         self.add_new_thumbnail.grid()
 
@@ -145,16 +147,21 @@ class HomeScreen(ctk.CTkFrame):
         self.root.show_frame("photo_gallery")
 
     def place_timelines(self, sorted_ids):
+        count = 2
         for id in sorted_ids:
             thumbnail = database.get_thumbnail(id)
             thumbnail = ctk.CTkImage(light_image=Image.open(thumbnail),
                                      size=(150, 100))
             name = database.get_timeline_name(id)
-            ctk.CTkButton(self,
-                          image=thumbnail,
-                          text=name,
-                          command=partial(self.open_timeline, id)
-                          ).grid()
+            image_button = ctk.CTkButton(self,
+                                         image=thumbnail,
+                                         text=name,
+                                         command=partial(self.open_timeline, id),
+                                         width=150,
+                                         compound="top"
+                                         )
+            image_button.grid(row=count // 5 + 2, column=count % 5)
+            count += 1
 
     def open_timeline(self, id):
         self.root.show_frame("timeline", id)
@@ -168,9 +175,9 @@ class HomeScreen(ctk.CTkFrame):
     def sort_request(self, factor):
         if database.timelines_exist():
             self.forget_timelines()
-            self.add_new_thumbnail.grid(row=2, column=1)
+            self.add_new_thumbnail.grid(row=2, column=0)
             self.place_timelines(database.sort_timelines(factor))
-            self.image_gallery_button.grid()
+            self.image_gallery_button.grid(row=2, column=1)
 
     def add_new_timeline(self):
         self.root.show_frame("add_timeline")
@@ -185,6 +192,9 @@ class CustomiseTimeline(ctk.CTkFrame):
             title_text = "Create new timeline"
         else:
             title_text = database.get_timeline_name(self.timeline_id)
+
+        if database.timeline_exists(999) and self.timeline_id==999:
+            database.set_timeline_name(self.timeline_id, "")
 
         self.title_text = ctk.CTkLabel(self,
                                        text=title_text,
@@ -390,9 +400,10 @@ class CustomiseTimeline(ctk.CTkFrame):
         self.back_button.grid(row=9, column=0)
 
 
-class PhotoGallery(ctk.CTkScrollableFrame):
+class PhotoGallery(ctk.CTkFrame):
     def __init__(self, root, timeline_id=None):
         self.active_tags = []
+        self.being_deleted = False
         self.filter_placed = False
         super().__init__(root)
         self.root = root
@@ -408,6 +419,8 @@ class PhotoGallery(ctk.CTkScrollableFrame):
             title = database.get_timeline_name(self.timeline_id)
             self.select_thumbnail_button = ctk.CTkButton(self, text="Toggle thumbnail select",
                                                          command=self.thumbnail_toggle).grid()
+            self.delete_toggle_button = ctk.CTkButton(self, text="Toggle deleting",
+                                                      command=self.delete_toggle).grid(column=1, row=0)
 
         self.title_text = ctk.CTkLabel(self,
                                        text=title,
@@ -415,7 +428,7 @@ class PhotoGallery(ctk.CTkScrollableFrame):
                                        pady=20
                                        )
         self.image_frame = ctk.CTkScrollableFrame(self, width=self.winfo_screenwidth(),
-                                                  height=self.winfo_screenheight()*0.7)
+                                                  height=self.winfo_screenheight() * 0.7)
 
         self.place()
 
@@ -434,14 +447,14 @@ class PhotoGallery(ctk.CTkScrollableFrame):
                                       values=["Photo ID", "Most used", "Date taken", "Custom (drag)"],
                                       command=self.sort_request
                                       )
-        self.sort_by_label.grid(column=1, row=1)
-        self.sorter.grid(column=2, row=1)
+        self.sort_by_label.grid(column=3, row=1)
+        self.sorter.grid(column=4, row=1)
         self.pencil_image = ctk.CTkImage(light_image=Image.open(plus))
         self.add_image_button = ctk.CTkButton(self, image=self.pencil_image, command=self.add_image, text="")
         self.image_frame.grid(columnspan=5, sticky="ew")
-        self.add_image_button.grid(column=4, row=2)
+        self.add_image_button.grid(column=4, row=3)
         self.back_button = ctk.CTkButton(self, text="Back", command=self.back)
-        self.back_button.grid(columnspan=5)
+        self.back_button.grid(row=3, column=3)
         self.filter_save = ctk.CTkButton(self.filter, text="Save", command=self.filter_save_command)
 
     def filter_save_command(self):
@@ -458,8 +471,9 @@ class PhotoGallery(ctk.CTkScrollableFrame):
     def forget_images(self):
         for widget in self.image_frame.winfo_children():
             widget.grid_forget()
+
     def place_images(self, photo_thumbnails_and_ids):
-   #     photo_thumbnails_and_ids = database.get_photo_thumbnails_and_ids(self.timeline_id)
+        #     photo_thumbnails_and_ids = database.get_photo_thumbnails_and_ids(self.timeline_id)
         if self.active_tags:
             photo_thumbnails_and_ids = database.filter_thumbnails_and_ids(photo_thumbnails_and_ids, self.active_tags)
         count = 0
@@ -482,20 +496,27 @@ class PhotoGallery(ctk.CTkScrollableFrame):
 
     def place_filter(self):
         if self.filter_placed:
+            for widget in self.filter.winfo_children():
+                widget.grid_forget()
             self.filter.grid_forget()
         else:
             self.filter.grid(column=1, row=1)
+            self.tag_search_box = ctk.CTkEntry(self.filter)
+            self.tag_search_box.grid()
+            self.tag_search_button = ctk.CTkButton(self.filter, text="Search", command=self.place_tags)
+            self.tag_search_button.grid()
             self.place_tags()
         self.filter_placed = not self.filter_placed
 
     def forget_tags(self):
         for widget in self.filter.winfo_children():
-            if isinstance(widget, ctk.CTkButton):
+            if isinstance(widget, ctk.CTkButton) and widget._command != self.place_tags:
                 widget.grid_forget()
 
     def place_tags(self):
         self.forget_tags()
-        tags = database.get_tags()
+        search_key = self.tag_search_box.get()
+        tags = database.get_tags(search_key=search_key)
         self.tick_image = ctk.CTkImage(light_image=Image.open(self.tick))
         for tag in tags:
             if tag in self.active_tags:
@@ -503,10 +524,10 @@ class PhotoGallery(ctk.CTkScrollableFrame):
             else:
                 image = None
             tag_button = ctk.CTkButton(self.filter,
-                                     #  image=image,
+                                       #  image=image,
                                        text=tag.name,
                                        command=partial(self.toggle_tag, tag),
-                                       image = image,
+                                       image=image,
                                        bg_color=tag.colour,
                                        fg_color=tag.colour,
                                        )
@@ -519,6 +540,7 @@ class PhotoGallery(ctk.CTkScrollableFrame):
         else:
             self.active_tags.append(tag)
         self.place_tags()
+
     def fill_filter_frame(self):
         ...
 
@@ -534,8 +556,14 @@ class PhotoGallery(ctk.CTkScrollableFrame):
     def open_image(self, id):
         if self.thumbnail_being_selected:
             database.add_thumbnail_to_timeline(id, self.timeline_id)
+        elif self.being_deleted:
+            database.delete_photo_from_timeline(id, self.timeline_id)
+            self.sort_request(self)
         else:
-            self.root.show_frame("view_photo", id)
+            self.root.show_frame("view_photo", id, self.timeline_id)
+
+    def delete_toggle(self):
+        self.being_deleted = not self.being_deleted
 
     def thumbnail_toggle(self):
         self.thumbnail_being_selected = not self.thumbnail_being_selected
@@ -555,7 +583,8 @@ class PhotoPicker(PhotoGallery):
 
         if database.image_in_timeline(id, self.timeline_id):
             database.remove_image_from_timeline(id, self.timeline_id)
-        database.add_image_to_timeline(id, self.timeline_id)
+        else:
+            database.add_image_to_timeline(id, self.timeline_id)
 
     def back(self):
         self.root.show_frame("customise_timeline", id=self.timeline_id)
@@ -566,6 +595,7 @@ class TimelineView(ctk.CTkFrame):
         super().__init__(root)
         self.root = root
         self.timeline_id = timeline_id
+        self.combobox_packed = False
         self.name = database.get_timeline_name(timeline_id)
         self.thumbnail_photo_id = database.get_timeline_thumbnail_photo_id(timeline_id)
         self.date_modified = database.get_timeline_date_modified(timeline_id)
@@ -579,7 +609,7 @@ class TimelineView(ctk.CTkFrame):
         self.screen_height = self.root.winfo_screenheight()
         self.screen_width = self.root.winfo_screenwidth()
 
-        self.scrollbar = ctk.CTkScrollbar(self, orientation="horizontal")
+        self.scrollbar = ctk.CTkScrollbar(self, orientation="horizontal", width=self.screen_width)
         self.place_canvas()
         self.scrollbar.pack(side="bottom")
         if not database.get_image("pencil"):
@@ -635,24 +665,32 @@ class TimelineView(ctk.CTkFrame):
             return "white"
         else:
             return "grey"
+
     def zoom(self):
-        try:
-            self.zoom_combobox.pack_info()
+        if self.combobox_packed:
             self.zoom_combobox.pack_forget()
 
-        except:
+        else:
+            self.canvas.pack_forget()
             self.zoom_combobox.pack(side="top")
+            self.canvas.pack(side="top")
+        self.combobox_packed = not self.combobox_packed
 
     def zoom_command(self, zoom):
-        zoom = int(zoom[:-1])/100
+        zoom = int(zoom[:-1]) / 100
         self.canvas.pack_forget()
         self.place_canvas(zoom)
+        self.zoom_combobox.pack(side="top")
+
 
     def place_canvas(self, scale: int = 1):
+        print(f"screen width: {self.screen_width}")
+        print(f"actual screen width: {self.root.winfo_screenwidth()}")
         self.canvas = ctk.CTkCanvas(self, width=self.screen_width,
                                     height=self.screen_height-200, background=self.background_colour,
                                     xscrollcommand=self.scrollbar.set,
-                                    scrollregion=(-5000 * scale, self.screen_height, 5000 * scale, 0))
+                                    scrollregion=(-5000 * scale, self.screen_height, 5000 * scale, 0),
+                                    )
         self.canvas.create_polygon((-5000 * scale, self.screen_height / 2 - self.line_weight * 5),
                                    (-5000 * scale, self.screen_height / 2 + self.line_weight * 5),
                                    (5000 * scale, self.screen_height / 2 + self.line_weight * 5),
@@ -671,7 +709,6 @@ class TimelineView(ctk.CTkFrame):
             date_taken = database.get_photo_date_taken(photo_id)
             aspect_ratio = Image.open(photo[0]).size[0] / Image.open(photo[0]).size[1]
             image = ctk.CTkImage(Image.open(photo[0]), size=(int(30 * aspect_ratio), 30), )
-            a = ctk.CTkButton(self)
             self.button = SpecialButton(self.canvas,
                                         image=image,
                                         text="",
@@ -693,21 +730,23 @@ class TimelineView(ctk.CTkFrame):
                                       text=marker[0],
                                       text_color=self.text_colour)
             self.canvas.create_window(marker[1], self.screen_height / 2 - 50, window=self.label)
-            self.canvas.create_line(marker[1], self.screen_height / 2 - 50, marker[1], self.screen_height / 2 - self.line_weight*5, width=self.line_weight, fill=self.text_colour)
+            self.canvas.create_line(marker[1], self.screen_height / 2 - 50, marker[1],
+                                    self.screen_height / 2 - self.line_weight * 5, width=self.line_weight,
+                                    fill=self.text_colour)
 
         # size=(100, 100))
 
         self.scrollbar.configure(command=self.canvas.xview)
-        self.canvas.place(x=0, y=0)
+        self.canvas.pack(side="top")
 
     def get_free_y_coord(self):
         y = 50
         y_list = []
         self.root.update()
-     #   print(self.canvas.coords(tag_or_id="image_button"))
-      #  print(y_list)
+        #   print(self.canvas.coords(tag_or_id="image_button"))
+        #  print(y_list)
         while y - 300 + 34 in y_list:
-       #     print("aaa")
+            #     print("aaa")
             y += 50
         return y
 
@@ -793,7 +832,6 @@ class ImportPhoto(ctk.CTkScrollableFrame):
                                                  text_color="red",
                                                  font=("Arial", 10))
 
-
         self.tag_entry_label = ctk.CTkLabel(self, text="Tag name: ")
         self.tag_colour_label = ctk.CTkLabel(self, text="Tag colour: ")
         self.tag_entry = ctk.CTkEntry(self)
@@ -840,8 +878,8 @@ class ImportPhoto(ctk.CTkScrollableFrame):
                                                                              self.save,
                                                                              self.add_tag,
                                                                              self.photo_upload]:
-               # print(widget._command)
-                #print("True")
+                # print(widget._command)
+                # print("True")
                 widget.grid_forget()
 
     def place_tags(self):
@@ -881,7 +919,8 @@ class ImportPhoto(ctk.CTkScrollableFrame):
         elif filepath:
             photo = ctk.CTkImage(light_image=Image.open(filepath))
             self.upload_button.grid_forget()
-            ctk.CTkLabel(self, image=photo, text="", width=100, height=100).grid(row=3, column=0, columnspan=3, padx=60, pady=60)
+            ctk.CTkLabel(self, image=photo, text="", width=100, height=100).grid(row=3, column=0, columnspan=3, padx=60,
+                                                                                 pady=60)
 
     def photo_upload(self):
         self.file_path = askopenfile(mode='r',
