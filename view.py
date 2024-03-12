@@ -37,6 +37,8 @@ class App(ctk.CTk):
         self.geometry("{0}x{1}+0+0".format(self.winfo_screenwidth(), self.winfo_screenheight() - 100))
         self.show_frame("homescreen")
         self.frames = None
+        self.tk.call('tk', 'scaling', 2)
+        self.dpi_scale_factor = self.winfo_fpixels("1i")/96
 
     def show_frame(self, current_frame, id=None, secondary_id=None):
         # self.frames = {
@@ -700,8 +702,9 @@ class TimelineView(ctk.CTkFrame):
     def place_canvas(self, scale: int = 1):
         print(f"screen width: {self.screen_width}")
         print(f"actual screen width: {self.root.winfo_screenwidth()}")
-        self.canvas = ctk.CTkCanvas(self, width=self.screen_width*1.5,
-                                    height=self.screen_height*1.5-200, background=self.background_colour,
+        self.canvas = ctk.CTkCanvas(self, width=self.screen_width*self.root.dpi_scale_factor,
+                                    height=(self.screen_height-200)*self.root.dpi_scale_factor,
+                                    background=self.background_colour,
                                     xscrollcommand=self.scrollbar.set,
                                     scrollregion=(-5000 * scale, self.screen_height, 5000 * scale, 0),
                                     )
