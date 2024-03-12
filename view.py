@@ -350,15 +350,29 @@ class CustomiseTimeline(ctk.CTkFrame):
             return False
         if not database.has_thumbnail(self.timeline_id):
             database.auto_thumbnail(self.timeline_id)
-        self.save_timeline_to_database()
-        database.update_modified(self.timeline_id)
-        if self.timeline_id == 999:
-            database.transfer_to_new_timeline()
-            self.root.show_frame("homescreen")
-        else:
-            self.root.show_frame("timeline", self.timeline_id)
+        if self.validate_save():
+
+            self.save_timeline_to_database()
+            database.update_modified(self.timeline_id)
+            if self.timeline_id == 999:
+                database.transfer_to_new_timeline()
+                self.root.show_frame("homescreen")
+            else:
+                self.root.show_frame("timeline", self.timeline_id)
         # update database
         # go back to original screen (parameterised exit)
+
+    def validate_save(self):
+        name = self.name_box.get()
+        line_colour = self.line_colour_box.get()
+        line_weight = self.line_weight_box.get()
+        background_colour = self.background_colour_box.get()
+        default_border_colour = self.default_border_colour_box.get()
+        default_border_weight = self.default_border_weight_box.get()
+
+        if len(name) not in range(1,21):
+            ...
+
 
     def back(self):
         if self.timeline_id == 999:
@@ -686,8 +700,8 @@ class TimelineView(ctk.CTkFrame):
     def place_canvas(self, scale: int = 1):
         print(f"screen width: {self.screen_width}")
         print(f"actual screen width: {self.root.winfo_screenwidth()}")
-        self.canvas = ctk.CTkCanvas(self, width=self.screen_width,
-                                    height=self.screen_height-200, background=self.background_colour,
+        self.canvas = ctk.CTkCanvas(self, width=self.screen_width*1.5,
+                                    height=self.screen_height*1.5-200, background=self.background_colour,
                                     xscrollcommand=self.scrollbar.set,
                                     scrollregion=(-5000 * scale, self.screen_height, 5000 * scale, 0),
                                     )
