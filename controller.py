@@ -306,6 +306,7 @@ class Database:
             return io.BytesIO(photo.data)
 
     def get_x_coords(self, timeline_id, scale):
+        self.showmonth = True
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == timeline_id).first()
         photos = timeline.photos_on_line
         sorted_dates = self.merge_sort([photo.date_taken for photo in photos], False)
@@ -322,15 +323,20 @@ class Database:
         last_year = most_recent.year + 1
         incrementer = datetime.datetime(first_year-1,12,1)
 
+        month_timedelta = datetime.timedelta(days=30)
+        if (month_timedelta/master_timedelta)*8000*scale < 75:
+            self.showmonth=False
         markers = []
         while incrementer <= datetime.datetime(last_year, 1, 1):
             incrementer = datetime.datetime((incrementer.year + incrementer.month // 12), ((incrementer.month % 12) + 1), 1)
             print(incrementer)
             if incrementer.month==1:
                 label=incrementer.year
-            else:
+            elif self.showmonth:
                 label=incrementer.strftime("%B")
                 print(f"label: {label}")
+            else:
+                label=""
             timedelta = incrementer - least_recent
             x_coord = (timedelta/master_timedelta)*8000*scale
             markers.append( (label, x_coord))
@@ -530,3 +536,11 @@ class Database:
     def tag_in_photo(self, tag, photo_id):
         photo = sess.query(Photo).filter(Photo.photo_ID == photo_id).first()
         return tag in photo.tags
+
+    def get_date_taken(self, filepath):
+        metadata = Image.open(filepath)._getexif()
+        date_string = metadata[36867]
+        date = date_string.split(" ")[0]
+        year, month, day = date.split(":")
+        return f"{day}/{month}/{year}"
+

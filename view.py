@@ -36,9 +36,20 @@ class App(ctk.CTk):
         print(f"dimensions: {self.winfo_screenwidth()}x{self.winfo_screenheight()}")
         self.geometry("{0}x{1}+0+0".format(self.winfo_screenwidth(), self.winfo_screenheight() - 100))
         self.show_frame("homescreen")
-        self.frames = None
         self.tk.call('tk', 'scaling', 2)
-        self.dpi_scale_factor = self.winfo_fpixels("1i")/96
+        self.dpi_scale_factor = self.winfo_fpixels("1i") / 96
+
+
+        self.frames = None
+
+ #   def adjusted_screenwidth(self):
+  #      print(f"dpi: { self.winfo_fpixels("1i")}")
+   #     self.dpi_scale_factor = self.winfo_fpixels("1i") / 96
+    #    return self.winfo_screenwidth()*self.dpi_scale_factor
+
+    #def adjusted_screenheight(self):
+     #   self.dpi_scale_factor = self.winfo_fpixels("1i") / 96
+      #  return self.winfo_screenheight()*self.dpi_scale_factor
 
     def show_frame(self, current_frame, id=None, secondary_id=None):
         # self.frames = {
@@ -131,11 +142,11 @@ class HomeScreen(ctk.CTkFrame):
         self.place()
 
     def configure_grid(self):
-        self.grid_columnconfigure(0, minsize=self.winfo_screenwidth() / 5)
-        self.grid_columnconfigure(1, minsize=self.winfo_screenwidth() / 5)
-        self.grid_columnconfigure(2, minsize=self.winfo_screenwidth() / 5)
-        self.grid_columnconfigure(3, minsize=self.winfo_screenwidth() / 5)
-        self.grid_columnconfigure(4, minsize=self.winfo_screenwidth() / 5)
+        self.grid_columnconfigure(0, minsize=int(self.winfo_screenwidth() / 5) -10)
+        self.grid_columnconfigure(1, minsize=int(self.winfo_screenwidth() / 5) -10)
+        self.grid_columnconfigure(2, minsize=int(self.winfo_screenwidth() / 5) -10)
+        self.grid_columnconfigure(3, minsize=int(self.winfo_screenwidth() / 5) -10)
+        self.grid_columnconfigure(4, minsize=int(self.winfo_screenwidth() / 5) -10)
 
     def place(self):
         self.title_text.grid(row=0, column=1, columnspan=3, sticky="ew")
@@ -622,8 +633,10 @@ class TimelineView(ctk.CTkFrame):
         self.default_border_colour = database.get_timeline_default_border_colour(timeline_id)
         self.default_border_weight = database.get_timeline_default_border_weight(timeline_id)
         self.text_colour = self.decide_text_colour()
-        self.screen_height = self.root.winfo_screenheight()
-        self.screen_width = self.root.winfo_screenwidth()
+        self.screen_height = self.root.winfo_screenheight()*self.root.dpi_scale_factor*0.75
+        self.screen_width = self.root.winfo_screenwidth()*self.root.dpi_scale_factor
+        print(f"dpi scale factor: {self.root.dpi_scale_factor}")
+
 
         self.scrollbar = ctk.CTkScrollbar(self, orientation="horizontal", width=self.screen_width)
         self.place_canvas()
@@ -702,8 +715,8 @@ class TimelineView(ctk.CTkFrame):
     def place_canvas(self, scale: int = 1):
         print(f"screen width: {self.screen_width}")
         print(f"actual screen width: {self.root.winfo_screenwidth()}")
-        self.canvas = ctk.CTkCanvas(self, width=self.screen_width*self.root.dpi_scale_factor,
-                                    height=(self.screen_height-200)*self.root.dpi_scale_factor,
+        self.canvas = ctk.CTkCanvas(self, width=self.screen_width,
+                                    height=self.screen_height,
                                     background=self.background_colour,
                                     xscrollcommand=self.scrollbar.set,
                                     scrollregion=(-5000 * scale, self.screen_height, 5000 * scale, 0),
@@ -743,11 +756,12 @@ class TimelineView(ctk.CTkFrame):
             self.canvas.create_line(x, y, x, self.screen_height / 2, width=self.line_weight, fill=self.line_colour)
 
         for marker in dates:
-            self.label = ctk.CTkLabel(self.canvas,
-                                      text=marker[0],
-                                      text_color=self.text_colour)
+            if marker[0] != "":
+                self.label = ctk.CTkLabel(self.canvas,
+                                        text=marker[0],
+                                        text_color=self.text_colour)
             self.canvas.create_window(marker[1], self.screen_height / 2 - 50, window=self.label)
-            self.canvas.create_line(marker[1], self.screen_height / 2 - 50, marker[1],
+            self.canvas.create_line(marker[1], self.screen_height / 2 - 40, marker[1],
                                     self.screen_height / 2 - self.line_weight * 5, width=self.line_weight,
                                     fill=self.text_colour)
 
@@ -928,13 +942,13 @@ class ImportPhoto(ctk.CTkScrollableFrame):
         photo = database.get_image_from_id(photo_id)
         if photo:
             photo = ctk.CTkImage(light_image=Image.open(photo),
-                                 size=(150, 100))
+                                 size=(250, 175))
             self.upload_button.grid_forget()
             ctk.CTkLabel(self,
                          image=photo, text=""
                          ).grid(row=3, column=0, columnspan=3, padx=60, pady=60)
         elif filepath:
-            photo = ctk.CTkImage(light_image=Image.open(filepath))
+            photo = ctk.CTkImage(light_image=Image.open(filepath), size=(250, 175))
             self.upload_button.grid_forget()
             ctk.CTkLabel(self, image=photo, text="", width=100, height=100).grid(row=3, column=0, columnspan=3, padx=60,
                                                                                  pady=60)
@@ -944,6 +958,11 @@ class ImportPhoto(ctk.CTkScrollableFrame):
                                      filetypes=[('Image Files', '*jpeg'), ('Image Files', '*jpg'),
                                                 ('Image Files', '*png')])
         self.show_image(photo_id=None, filepath=self.file_path.name)
+        self.fill_date_taken(self.file_path.name)
+
+    def fill_date_taken(self, filepath):
+        date_taken = database.get_date_taken(filepath)
+        self.date_taken_box.insert(0, date_taken)
 
     def save(self):
         save_blocked = False

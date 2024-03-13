@@ -52,3 +52,5 @@ cannot add tags to uncreated photo
 date doesn't work with pre 2000?
 -see ed sheeran timeline
 its giving me too many months and dates too frequenctly
+
+description is not grabbed from metadata because it is less standardised and users will very rarely add a decription in their file explorer.
