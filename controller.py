@@ -6,7 +6,6 @@ from default_image_binary import default_images
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 import io
-import binascii
 
 engine = create_engine('sqlite:///database.sqlite', echo=False)
 Base.metadata.create_all(engine)
@@ -16,6 +15,25 @@ sess = Session(engine)
 class Database:
 
     def add_image(self, **kwargs):
+        """
+        This function adds an image to the database, taking keyword arguments for possible attributes of a photo
+        object
+
+
+        Parameters
+        ----------
+        kwargs:
+            data
+            caption
+            name
+            date_taken
+
+        Returns
+        -------
+        photo.photo_ID
+            the ID of the photo that has just been added to the database.
+
+        """
         default_image = None
         if "from_default_set" in kwargs:
             default_image = kwargs.pop("from_default_set")
@@ -48,16 +66,62 @@ class Database:
             return photo.photo_ID
 
     def set_photo_caption(self, photo_id, caption):
+        """
+        Sets the caption in the database for a given photo, identified by the photo_id
+
+        Parameters
+        ----------
+        photo_id
+            The ID of the photo to be modified
+        caption
+            The desired new caption of the photo
+
+        Returns
+        -------
+
+        """
         photo = sess.query(Photo).filter(Photo.photo_ID == photo_id).first()
         photo.caption = caption
         sess.commit()
 
     def set_photo_date_taken(self, photo_id, date_taken):
+        """
+        Sets the date_taken in the database for a given photo, identified by the photo_id
+
+        Parameters
+        ----------
+        photo_id
+            The ID of the photo to be modified
+        date_taken
+            The desired new date_taken of the photo
+
+        Returns
+        -------
+
+        """
         photo = sess.query(Photo).filter(Photo.photo_ID == photo_id).first()
         photo.date_taken = date_taken
         sess.commit()
 
-    def get_image(self, caption):
+    def get_image_from_caption(self, caption):
+        """
+
+        Parameters
+        ----------
+        caption
+            The caption of the photo to be returned
+
+        Returns
+        -------
+        io.BytesIO(image_binary)
+            An IO bytestream of the binary code for the requested image
+            Returned if an image exists with the specified caption
+
+        False
+            Boolean False value
+            Returned if no image exists with the specified caption
+
+        """
         plus_image = sess.query(Photo).filter(Photo.caption == caption).first()
         if plus_image:
             plus_image_binary = plus_image.data
@@ -65,11 +129,37 @@ class Database:
         return False
 
     def get_image_from_id(self, id):
+        """
+
+        Parameters
+        ----------
+        id
+            The ID of the photo that is being requested.
+
+        Returns
+            io.BytesIO(image_binary)
+                IO bytestream representing the raw binary of the requested image
+        -------
+
+        """
         if sess.query(Photo).filter(Photo.photo_ID == id).first():
             image_binary = sess.query(Photo).filter(Photo.photo_ID == id).first().data
             return io.BytesIO(image_binary)
 
     def get_thumbnails(self):
+        """
+        Queries all the thumbnails in the database, then iterates through their IDs
+        For each timeline ID, grabs the associated name and binary of the thumbnail.
+
+        Returns
+        -------
+        return_list
+            Two dimensional list with each item representing the information for a timeline
+            Each item contains 'name' and 'photo_data'
+            The name represents the name of the timeline
+            photo_data is a bytestream representing the binary of the timeline thumbnail.
+
+        """
         return_list = []
         thumbnail_ids = [timeline.thumbnail_photo_ID for timeline in sess.query(Timeline).all()]
 
@@ -79,11 +169,29 @@ class Database:
             if photo_data:
                 photo_data = photo_data.data
                 photo_data = io.BytesIO(photo_data)
-            return_list.append(name, photo_data)
+            return_list.append([name, photo_data])
 
         return return_list
 
     def get_timeline_name(self, id):
+        """
+        Grabs the timeline name for a specified ID
+
+        Parameters
+        ----------
+        id
+            The ID of the requested timeline
+
+        Returns
+        -------
+        timeline.name
+            The name of the requested timeline
+            Returned if there is a valid timeline associated with the ID
+
+        Empty string
+            Returned if there is no valid timeline associated with the ID
+
+        """
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id).first()
         if timeline and timeline.name:
             return timeline.name
@@ -91,6 +199,24 @@ class Database:
             return ""
 
     def get_timeline_thumbnail_photo_id(self, id):
+        """
+        Grabs the timeline thumbnail photo ID for a specified ID
+
+        Parameters
+        ----------
+        id
+            The ID of the requested timeline
+
+        Returns
+        -------
+        timeline.thumbnail_photo_ID
+            The photo ID for the thumbnail of the requested timeline
+            Returned if there is a valid timeline associated with the ID
+
+        Empty string
+            Returned if there is no valid timeline associated with the ID
+
+        """
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id).first()
         if timeline and timeline.thumbnail_photo_ID:
             return timeline.thumbnail_photo_ID
@@ -98,6 +224,24 @@ class Database:
             return ""
 
     def get_timeline_date_modified(self, id):
+        """
+        Grabs the timeline date_modified for a specified ID
+
+        Parameters
+        ----------
+        id
+            The ID of the requested timeline
+
+        Returns
+        -------
+        timeline.date_modified
+            The date_modified of the requested timeline
+            Returned if there is a valid timeline associated with the ID
+
+        Empty string
+            Returned if there is no valid timeline associated with the ID
+
+        """
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id).first()
         if timeline and timeline.date_modified:
             return timeline.date_modified
@@ -112,6 +256,24 @@ class Database:
             return ""
 
     def get_timeline_background_colour(self, id):
+        """
+        Grabs the timeline background colour for a specified ID
+
+        Parameters
+        ----------
+        id
+            The ID of the requested timeline
+
+        Returns
+        -------
+        timeline.background_colour
+            The background colour of the requested timeline
+            Returned if there is a valid timeline associated with the ID
+
+        Empty string
+            Returned if there is no valid timeline associated with the ID
+
+        """
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id).first()
         if timeline and timeline.background_colour:
             return timeline.background_colour
@@ -119,6 +281,24 @@ class Database:
             return ""
 
     def get_timeline_line_colour(self, id):
+        """
+        Grabs the timeline line colour for a specified ID
+
+        Parameters
+        ----------
+        id
+            The ID of the requested timeline
+
+        Returns
+        -------
+        timeline.line_colour
+            The line colour of the requested timeline
+            Returned if there is a valid timeline associated with the ID
+
+        Empty string
+            Returned if there is no valid timeline associated with the ID
+
+        """
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id).first()
         if timeline and timeline.line_colour:
             return timeline.line_colour
@@ -126,6 +306,24 @@ class Database:
             return ""
 
     def get_timeline_line_weight(self, id):
+        """
+        Grabs the timeline line weight for a specified ID
+
+        Parameters
+        ----------
+        id
+            The ID of the requested timeline
+
+        Returns
+        -------
+        timeline.line_weight
+            The line weight of the requested timeline
+            Returned if there is a valid timeline associated with the ID
+
+        Empty string
+            Returned if there is no valid timeline associated with the ID
+
+        """
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id).first()
         if timeline and timeline.line_weight:
             return timeline.line_weight
@@ -146,8 +344,34 @@ class Database:
         else:
             return ""
 
-    def set_timeline(self, name, thumbnail_photo_id, date_modified, background_photo_id, background_colour, line_colour,
-                     line_weight, default_border_colour, default_border_weight):
+    def create_timeline(self, name, thumbnail_photo_id, date_modified, background_photo_id, background_colour, line_colour,
+                        line_weight, default_border_colour, default_border_weight):
+        """
+        Provides an option to create a timeline all in one go, with every field filled.
+        Different to individual setters because this is used for creating, rather than modifying
+
+        Parameters
+        ----------
+        name
+            The name of the timeline
+        thumbnail_photo_id
+            The ID of the photo to be used as a thumbnail for the timeline
+        date_modified
+            The date the timeline was last modified
+        background_photo_id
+        background_colour
+            The background colour for the timeline
+        line_colour
+            The colour of the actual line
+        line_weight
+            The weight of the actual line
+        default_border_colour
+        default_border_weight
+
+        Returns
+        -------
+
+        """
         timeline = Timeline(name=name, background_photo_ID=background_photo_id, background_colour=background_colour,
                             line_colour=line_colour,
                             line_weight=line_weight, default_border_colour=default_border_colour,

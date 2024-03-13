@@ -1,9 +1,5 @@
 import customtkinter as ctk
 from PIL import Image
-from entities import Tag, Timeline, Base, Photo
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
-import io
 from controller import Database
 from tkinter.filedialog import askopenfile
 import re
@@ -39,17 +35,16 @@ class App(ctk.CTk):
         self.tk.call('tk', 'scaling', 2)
         self.dpi_scale_factor = self.winfo_fpixels("1i") / 96
 
-
         self.frames = None
 
- #   def adjusted_screenwidth(self):
-  #      print(f"dpi: { self.winfo_fpixels("1i")}")
-   #     self.dpi_scale_factor = self.winfo_fpixels("1i") / 96
+    #   def adjusted_screenwidth(self):
+    #      print(f"dpi: { self.winfo_fpixels("1i")}")
+    #     self.dpi_scale_factor = self.winfo_fpixels("1i") / 96
     #    return self.winfo_screenwidth()*self.dpi_scale_factor
 
-    #def adjusted_screenheight(self):
-     #   self.dpi_scale_factor = self.winfo_fpixels("1i") / 96
-      #  return self.winfo_screenheight()*self.dpi_scale_factor
+    # def adjusted_screenheight(self):
+    #   self.dpi_scale_factor = self.winfo_fpixels("1i") / 96
+    #  return self.winfo_screenheight()*self.dpi_scale_factor
 
     def show_frame(self, current_frame, id=None, secondary_id=None):
         # self.frames = {
@@ -88,6 +83,8 @@ class App(ctk.CTk):
             frame_to_show = PhotoPicker(self, timeline_id=id)
         elif current_frame == "new_photo":
             frame_to_show = ImportPhoto(self)
+        else:
+            frame_to_show = None
         frame_to_show.pack(expand=True, fill=ctk.BOTH)
     #   frame_to_show.set_up()
 
@@ -97,14 +94,14 @@ class HomeScreen(ctk.CTkFrame):
     def __init__(self, root):
         super().__init__(root)
         self.root = root
-        if not database.get_image("plus"):
+        if not database.get_image_from_caption("plus"):
             database.add_image(from_default_set="plus")
-        plus_image = database.get_image("plus")
+        plus_image = database.get_image_from_caption("plus")
         self.my_image = ctk.CTkImage(light_image=Image.open(plus_image),
                                      size=(150, 100))
-        if not database.get_image("images"):
+        if not database.get_image_from_caption("images"):
             database.add_image(from_default_set="images")
-        images_image = database.get_image("images")
+        images_image = database.get_image_from_caption("images")
         self.my_image_2 = ctk.CTkImage(light_image=Image.open(images_image),
                                        size=(150, 100))
         #      self.configure(background="white")
@@ -127,9 +124,9 @@ class HomeScreen(ctk.CTkFrame):
 
         self.add_new_thumbnail = ctk.CTkButton(self,
                                                image=self.my_image,
-                                           #    width=self.my_image._size[0],
-                                            #   height=self.my_image._size[1],
-                                               text=None,
+                                               #    width=self.my_image._size[0],
+                                               #   height=self.my_image._size[1],
+                                               text="",
                                                command=self.add_new_timeline)
 
         self.image_gallery_button = ctk.CTkButton(self,
@@ -142,11 +139,11 @@ class HomeScreen(ctk.CTkFrame):
         self.place()
 
     def configure_grid(self):
-        self.grid_columnconfigure(0, minsize=int(self.winfo_screenwidth() / 5) -10)
-        self.grid_columnconfigure(1, minsize=int(self.winfo_screenwidth() / 5) -10)
-        self.grid_columnconfigure(2, minsize=int(self.winfo_screenwidth() / 5) -10)
-        self.grid_columnconfigure(3, minsize=int(self.winfo_screenwidth() / 5) -10)
-        self.grid_columnconfigure(4, minsize=int(self.winfo_screenwidth() / 5) -10)
+        self.grid_columnconfigure(0, minsize=int(self.winfo_screenwidth() / 5) - 10)
+        self.grid_columnconfigure(1, minsize=int(self.winfo_screenwidth() / 5) - 10)
+        self.grid_columnconfigure(2, minsize=int(self.winfo_screenwidth() / 5) - 10)
+        self.grid_columnconfigure(3, minsize=int(self.winfo_screenwidth() / 5) - 10)
+        self.grid_columnconfigure(4, minsize=int(self.winfo_screenwidth() / 5) - 10)
 
     def place(self):
         self.title_text.grid(row=0, column=1, columnspan=3, sticky="ew")
@@ -206,7 +203,7 @@ class CustomiseTimeline(ctk.CTkFrame):
         else:
             title_text = database.get_timeline_name(self.timeline_id)
 
-        if database.timeline_exists(999) and self.timeline_id==999:
+        if database.timeline_exists(999) and self.timeline_id == 999:
             database.set_timeline_name(self.timeline_id, "")
 
         self.title_text = ctk.CTkLabel(self,
@@ -383,9 +380,8 @@ class CustomiseTimeline(ctk.CTkFrame):
         default_border_colour = self.default_border_colour_box.get()
         default_border_weight = self.default_border_weight_box.get()
 
-        if len(name) not in range(1,21):
+        if len(name) not in range(1, 21):
             ...
-
 
     def back(self):
         if self.timeline_id == 999:
@@ -434,9 +430,9 @@ class PhotoGallery(ctk.CTkFrame):
         self.filter_placed = False
         super().__init__(root)
         self.root = root
-        if not database.get_image("tick"):
+        if not database.get_image_from_caption("tick"):
             database.add_image(from_default_set="tick")
-        self.tick = database.get_image("tick")
+        self.tick = database.get_image_from_caption("tick")
         self.timeline_id = timeline_id
         self.thumbnail_being_selected = False
 
@@ -455,14 +451,14 @@ class PhotoGallery(ctk.CTkFrame):
                                        pady=20
                                        )
         self.image_frame = ctk.CTkScrollableFrame(self, width=self.winfo_screenwidth(),
-                                                  height=self.winfo_screenheight() * 0.7)
+                                                  height=int(self.winfo_screenheight() * 0.7))
 
         self.place()
 
         self.place_images(database.get_photo_thumbnails_and_ids(timeline_id=self.timeline_id))
-        if not database.get_image("plus"):
+        if not database.get_image_from_caption("plus"):
             database.add_image(from_default_set="plus")
-        plus = database.get_image("plus")
+        plus = database.get_image_from_caption("plus")
         self.filter_button = ctk.CTkButton(self, text="Filter", command=self.place_filter)
         self.filter_button.grid(column=0, row=1)
         self.filter = ctk.CTkScrollableFrame(self, bg_color="blue", fg_color="blue")
@@ -509,7 +505,7 @@ class PhotoGallery(ctk.CTkFrame):
             image.configure(size=[(self.winfo_screenwidth() - 50) / 5, (self.winfo_screenwidth() - 50) / 5])
             button = ctk.CTkButton(self.image_frame,
                                    image=image,
-                                   text=None,
+                                   text="",
                                    command=partial(self.open_image, photo[1]),
                                    height=image._size[0],
                                    width=image._size[0],
@@ -633,28 +629,31 @@ class TimelineView(ctk.CTkFrame):
         self.default_border_colour = database.get_timeline_default_border_colour(timeline_id)
         self.default_border_weight = database.get_timeline_default_border_weight(timeline_id)
         self.text_colour = self.decide_text_colour()
-        self.screen_height = self.root.winfo_screenheight()*self.root.dpi_scale_factor*0.75
-        self.screen_width = self.root.winfo_screenwidth()*self.root.dpi_scale_factor
+        self.screen_height = self.root.winfo_screenheight() * self.root.dpi_scale_factor * 0.85
+        self.screen_width = self.root.winfo_screenwidth() * self.root.dpi_scale_factor
         print(f"dpi scale factor: {self.root.dpi_scale_factor}")
-
 
         self.scrollbar = ctk.CTkScrollbar(self, orientation="horizontal", width=self.screen_width)
         self.place_canvas()
         self.scrollbar.pack(side="bottom")
-        if not database.get_image("pencil"):
+        self.title_text = ctk.CTkLabel(self, text=self.name, font=("Arial", 30), text_color=self.text_colour,
+                                       bg_color=self.background_colour)
+        self.title_text.place(relx=0.45, y=5)
+        if not database.get_image_from_caption("pencil"):
             database.add_image(from_default_set="pencil")
-        if not database.get_image("magnifying glass"):
+        if not database.get_image_from_caption("magnifying glass"):
             database.add_image(from_default_set="magnifying glass")
-        magnifying_glass = database.get_image("magnifying glass")
-        pencil = database.get_image("pencil")
-        if not database.get_image("home"):
+        magnifying_glass = database.get_image_from_caption("magnifying glass")
+        pencil = database.get_image_from_caption("pencil")
+        if not database.get_image_from_caption("home"):
             database.add_image(from_default_set="home")
-        home = database.get_image("home")
+        home = database.get_image_from_caption("home")
         self.pencil_image = ctk.CTkImage(light_image=Image.open(pencil))
         self.magnifying_glass_image = ctk.CTkImage(light_image=Image.open(magnifying_glass))
         self.home_image = ctk.CTkImage(light_image=Image.open(home))
         self.edit_button = ctk.CTkButton(self,
                                          corner_radius=40,
+                                         bg_color=self.background_colour,
                                          width=30,
                                          height=30,
                                          text="",
@@ -662,6 +661,7 @@ class TimelineView(ctk.CTkFrame):
                                          command=partial(self.root.show_frame, "customise_timeline", self.timeline_id))
         self.zoom_button = ctk.CTkButton(self,
                                          corner_radius=40,
+                                         bg_color=self.background_colour,
                                          width=30,
                                          height=30,
                                          text="",
@@ -669,6 +669,7 @@ class TimelineView(ctk.CTkFrame):
                                          command=self.zoom)
         self.home_button = ctk.CTkButton(self,
                                          corner_radius=40,
+                                         bg_color=self.background_colour,
                                          width=30,
                                          height=30,
                                          text="",
@@ -679,9 +680,9 @@ class TimelineView(ctk.CTkFrame):
                                              command=self.zoom_command,
                                              )
         self.zoom_combobox.set("100%")
-        self.edit_button.pack(side="bottom")
-        self.zoom_button.pack(side="bottom")
-        self.home_button.pack(side="bottom")
+        self.edit_button.place(x=self.winfo_screenwidth() * 0.9, y=self.winfo_screenheight() * 0.8)
+        self.zoom_button.place(x=self.winfo_screenwidth() * 0.95, y=self.winfo_screenheight() * 0.8)
+        self.home_button.place(x=self.winfo_screenwidth() * 0.85, y=self.winfo_screenheight() * 0.8)
 
         #  self.test_button.place(relx=0.5, rely=0)
 
@@ -711,8 +712,7 @@ class TimelineView(ctk.CTkFrame):
         self.place_canvas(zoom)
         self.zoom_combobox.pack(side="top")
 
-
-    def place_canvas(self, scale: int = 1):
+    def place_canvas(self, scale: float = 1):
         print(f"screen width: {self.screen_width}")
         print(f"actual screen width: {self.root.winfo_screenwidth()}")
         self.canvas = ctk.CTkCanvas(self, width=self.screen_width,
@@ -758,8 +758,8 @@ class TimelineView(ctk.CTkFrame):
         for marker in dates:
             if marker[0] != "":
                 self.label = ctk.CTkLabel(self.canvas,
-                                        text=marker[0],
-                                        text_color=self.text_colour)
+                                          text=marker[0],
+                                          text_color=self.text_colour)
             self.canvas.create_window(marker[1], self.screen_height / 2 - 50, window=self.label)
             self.canvas.create_line(marker[1], self.screen_height / 2 - 40, marker[1],
                                     self.screen_height / 2 - self.line_weight * 5, width=self.line_weight,
@@ -793,9 +793,9 @@ class ImportPhoto(ctk.CTkScrollableFrame):
         self.timeline_id = timeline_id
         self.photo_id = photo_id
         self.file_path = None
-        if not database.get_image("tick"):
+        if not database.get_image_from_caption("tick"):
             database.add_image(from_default_set="tick")
-        self.tick = database.get_image("tick")
+        self.tick = database.get_image_from_caption("tick")
         self.temp_tags = []
         if self.photo_id:
             title = "View photo"

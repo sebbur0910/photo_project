@@ -54,3 +54,8 @@ date doesn't work with pre 2000?
 its giving me too many months and dates too frequenctly
 
 description is not grabbed from metadata because it is less standardised and users will very rarely add a decription in their file explorer.
+
+background photo for timeline deemed inessential: would look ugly and distract from the actual photos
+
+default border colour and default border weight?
+also deemed non-essential?
