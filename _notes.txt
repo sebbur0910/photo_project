@@ -59,3 +59,4 @@ background photo for timeline deemed inessential: would look ugly and distract f
 
 default border colour and default border weight?
 also deemed non-essential?
+I do need to do validation: if two timelines have the same name, the sorting algorithm will output one of them twice (i think)

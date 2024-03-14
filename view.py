@@ -848,7 +848,7 @@ class ImportPhoto(ctk.CTkScrollableFrame):
                                          command=self.back)
 
         self.date_not_good_box = ctk.CTkLabel(self,
-                                              text="Please enter date in format DD/MM/YYY",
+                                              text="Please enter date in format DD/MM/YYYY",
                                               text_color="red",
                                               font=("Arial", 10))
 
