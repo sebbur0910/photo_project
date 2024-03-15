@@ -676,11 +676,12 @@ class Database:
         timeline_query = sess.query(Timeline).filter(Timeline.timeline_ID == 999)
         timeline = timeline_query.first()
         photos = [photo for photo in timeline.photos_on_line]
+        self.clear_photos(999)
         # Changes the ID of timeline 999 to the available ID, effectively transferring its data
         timeline_query.update({"timeline_ID": new_timeline_id})
         # Transfers the associated photos across, then clears timeline 999
-        timeline.photos_on_line += photos
-        self.clear_photos(999)
+        new_timeline = sess.query(Timeline).filter(Timeline.timeline_ID == new_timeline_id).first()
+        new_timeline.photos_on_line += photos
         self.delete_timeline(999)
         sess.commit()
 

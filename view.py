@@ -10,62 +10,68 @@ database = Database()
 
 
 class SpecialButton(ctk.CTkButton):
+    """
+    Polymorphic button for use in the timeline view
+    This button expands when hovered upon
+    """
 
+    # Changes the binding of hover to expand the button's image
     def _on_enter(self, event=None):
         new_width = self._image._size[0] * 2
         new_height = self._image._size[1] * 2
         self._image.configure(size=(new_width, new_height))
-        # self.configure(width=new_width+400, height=new_height+400)
 
+    # Changes the binding of leaving hover to reduce the size of the button's image
     def _on_leave(self, event=None):
         new_width = self._image._size[0] / 2
         new_height = self._image._size[1] / 2
         self._image.configure(size=(new_width, new_height))
-        # self.configure(width=new_width, height=new_height)
 
 
 class App(ctk.CTk):
+    """
+    The main application, which hosts the different frames
+    """
 
     def __init__(self):
         super().__init__()
-        print(f"original screenwidth: {self.winfo_screenwidth()}")
-        print(f"dimensions: {self.winfo_screenwidth()}x{self.winfo_screenheight()}")
+        # Makes the window fill the screen
         self.geometry("{0}x{1}+0+0".format(self.winfo_screenwidth(), self.winfo_screenheight() - 100))
+        # Shows the homescreen frame
         self.show_frame("homescreen")
+        # After the frame is called, tkinter gets confused with its geometry manager
+        # This enables the program to adjust for virtual / physical pixel disparity
         self.tk.call('tk', 'scaling', 2)
         self.dpi_scale_factor = self.winfo_fpixels("1i") / 96
 
-        self.frames = None
-
-    #   def adjusted_screenwidth(self):
-    #      print(f"dpi: { self.winfo_fpixels("1i")}")
-    #     self.dpi_scale_factor = self.winfo_fpixels("1i") / 96
-    #    return self.winfo_screenwidth()*self.dpi_scale_factor
-
-    # def adjusted_screenheight(self):
-    #   self.dpi_scale_factor = self.winfo_fpixels("1i") / 96
-    #  return self.winfo_screenheight()*self.dpi_scale_factor
-
     def show_frame(self, current_frame, id=None, secondary_id=None):
-        # self.frames = {
-        #   "homescreen": HomeScreen(self),
-        #  "add_timeline": CustomiseTimeline(self, 999),
-        # "photo_gallery": PhotoGallery(self, False),
-        # "timeline": TimelineView(self, id),
-        # "customise_timeline": CustomiseTimeline(self, id),
-        # "timeline_photos": PhotoGallery(self, id),
-        # "timeline_new_photo": ImportPhoto(self, timeline_id=id),
-        # "view_photo": ImportPhoto(self, photo_id=id),
-        # "photo_picker": PhotoPicker(self, timeline_id=id)
-        # }
+        """
+        Fills the app window with the necessary frame
+
+        Parameters
+        ----------
+        current_frame
+            The frame to display
+        id
+            General ID parameter, often necessary for setting up the frame
+        secondary_id
+            General secondary ID parameter, often necessary for setting up the frame
+
+        Returns
+        -------
+
+        """
         widgets = self.winfo_children()
+        # Clears the previous frame
         for widget in widgets:
-            #  print(widget.winfo_class)
             if widget.winfo_class() == "Frame":
                 widget.pack_forget()
+        # If statement converts the string input into the necessary class
         if current_frame == "homescreen":
             frame_to_show = HomeScreen(self)
         elif current_frame == "add_timeline":
+            # For a timeline to be added, the CustomiseTimeline screen is called
+            # But with the ID of 999, representing the temporary timeline
             frame_to_show = CustomiseTimeline(self, 999)
         elif current_frame == "photo_gallery":
             frame_to_show = PhotoGallery(self)
@@ -85,8 +91,8 @@ class App(ctk.CTk):
             frame_to_show = ImportPhoto(self)
         else:
             frame_to_show = None
+        # Makes the frame fill out the window
         frame_to_show.pack(expand=True, fill=ctk.BOTH)
-    #   frame_to_show.set_up()
 
 
 class HomeScreen(ctk.CTkFrame):
@@ -94,6 +100,7 @@ class HomeScreen(ctk.CTkFrame):
     def __init__(self, root):
         super().__init__(root)
         self.root = root
+        # Gets the plus image and the 'images' image for the add timeline and image gallery buttons
         if not database.get_image_from_caption("plus"):
             database.add_image(from_default_set="plus")
         plus_image = database.get_image_from_caption("plus")
@@ -104,9 +111,7 @@ class HomeScreen(ctk.CTkFrame):
         images_image = database.get_image_from_caption("images")
         self.my_image_2 = ctk.CTkImage(light_image=Image.open(images_image),
                                        size=(150, 100))
-        #      self.configure(background="white")
-        #     self.title("Home")
-
+        # Makes a label for the title
         self.title_text = ctk.CTkLabel(self,
                                        text="Home",
                                        font=("Arial Bold", 35),
@@ -116,29 +121,33 @@ class HomeScreen(ctk.CTkFrame):
         self.sort_by_label = ctk.CTkLabel(self,
                                           text="Sort by:",
                                           font=("Arial", 13))
-
+        # Creates a combobox from which the user can select the sorting factor
         self.sorter = ctk.CTkComboBox(self,
                                       values=["A-Z", "Z-A", "Recently modified", "Custom (drag)"],
                                       command=self.sort_request
                                       )
-
+        # Button to add a new thumbnail
         self.add_new_thumbnail = ctk.CTkButton(self,
                                                image=self.my_image,
-                                               #    width=self.my_image._size[0],
-                                               #   height=self.my_image._size[1],
                                                text="",
                                                command=self.add_new_timeline)
-
+        # Button to open the image gallery
         self.image_gallery_button = ctk.CTkButton(self,
                                                   text="",
                                                   image=self.my_image_2,
                                                   command=self.open_images)
 
-        #  self.thumbnails = database.get_thumbnails()
         self.configure_grid()
         self.place()
 
     def configure_grid(self):
+        """
+        Configures the columns of the grid so that they are regular
+
+        Returns
+        -------
+
+        """
         self.grid_columnconfigure(0, minsize=int(self.winfo_screenwidth() / 5) - 10)
         self.grid_columnconfigure(1, minsize=int(self.winfo_screenwidth() / 5) - 10)
         self.grid_columnconfigure(2, minsize=int(self.winfo_screenwidth() / 5) - 10)
@@ -203,7 +212,7 @@ class CustomiseTimeline(ctk.CTkFrame):
         else:
             title_text = database.get_timeline_name(self.timeline_id)
 
-        if database.timeline_exists(999) and self.timeline_id == 999:
+        if (not database.timeline_exists(999)) and self.timeline_id == 999:
             database.set_timeline_name(self.timeline_id, "")
 
         self.title_text = ctk.CTkLabel(self,
@@ -310,6 +319,22 @@ class CustomiseTimeline(ctk.CTkFrame):
                                          font=("Arial", 15),
                                          corner_radius=3,
                                          command=self.save)
+        self.no_photos_label = ctk.CTkLabel(self,
+                                            text="Timeline must have at least one photo",
+                                            text_color="red")
+        self.name_bad_length_label = ctk.CTkLabel(self,
+                                                  text="Name must be between 1 and 20 characters long",
+                                                  text_color="red")
+        self.name_taken_label = ctk.CTkLabel(self, text="Name already in use",
+                                             text_color="red")
+        self.line_colour_bad_label = ctk.CTkLabel(self,
+                                                  text="Colour must be red, green, yellow, blue, white, orange, pink, black",
+                                                  text_color="red")
+        self.line_weight_bad_label = ctk.CTkLabel(self, text="Must be a numerical value between 0.5 and 10",
+                                                  text_color="red")
+        self.background_colour_bad_label = ctk.CTkLabel(self,
+                                                        text="Colour must be red, green, yellow, blue, white, orange, pink, black",
+                                                        text_color="red")
         self.insert_existing_values()
         self.place()
 
@@ -356,12 +381,9 @@ class CustomiseTimeline(ctk.CTkFrame):
             database.set_timeline_default_border_weight(self.timeline_id, 1)
 
     def save(self):
-        if not database.has_photos(self.timeline_id):
-            return False
-        if not database.has_thumbnail(self.timeline_id):
-            database.auto_thumbnail(self.timeline_id)
         if self.validate_save():
-
+            if not database.has_thumbnail(self.timeline_id):
+                database.auto_thumbnail(self.timeline_id)
             self.save_timeline_to_database()
             database.update_modified(self.timeline_id)
             if self.timeline_id == 999:
@@ -373,6 +395,10 @@ class CustomiseTimeline(ctk.CTkFrame):
         # go back to original screen (parameterised exit)
 
     def validate_save(self):
+        accept = True
+        if not database.has_photos(self.timeline_id):
+            accept = False
+            self.no_photos_label.grid(row=7, column=1)
         name = self.name_box.get()
         line_colour = self.line_colour_box.get()
         line_weight = self.line_weight_box.get()
@@ -381,7 +407,28 @@ class CustomiseTimeline(ctk.CTkFrame):
         default_border_weight = self.default_border_weight_box.get()
 
         if len(name) not in range(1, 21):
-            ...
+            self.name_bad_length_label.grid(column=2, row=1)
+            accept = False
+        else:
+            self.name_bad_length_label.grid_forget()
+        if line_colour.lower() not in ["", "red", "green", "yellow", "blue", "white", "orange", "pink", "black"]:
+            self.line_colour_bad_label.grid(column=2, row=2)
+            print("line_colout")
+            accept = False
+        else:
+            self.line_colour_bad_label.grid_forget()
+        if not(line_weight=="" or (line_weight.isnumeric() and 0.5 < float(line_weight) < 20)):
+            self.line_weight_bad_label.grid(column=2, row=3)
+            accept = False
+        else:
+            self.line_weight_bad_label.grid_forget()
+        if background_colour.lower() not in ["", "red", "green", "yellow", "blue", "white", "orange", "pink", "black"]:
+            self.background_colour_bad_label.grid(column=2, row=4)
+            accept = False
+        else:
+            self.background_colour_bad_label.grid_forget()
+
+        return accept
 
     def back(self):
         if self.timeline_id == 999:
