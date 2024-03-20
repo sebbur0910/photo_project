@@ -28,7 +28,7 @@ def test_timeline():
                  line_weight=1, default_border_colour="#32e852", default_border_weight=1)
     with pytest.raises(ValueError):
         Timeline(name="tester", background_photo_ID=1, background_colour="#32e852", line_colour="pink",
-                 line_weight=1, default_border_colour="#32e852", default_border_weight=1)
+                 line_weight="thick", default_border_colour="#32e852", default_border_weight=1)
     with pytest.raises(ValueError):
         Timeline(name="tester", background_photo_ID=1, background_colour="32e852", line_colour="#32e852",
                  line_weight=1, default_border_colour="random", default_border_weight=1)

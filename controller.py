@@ -103,6 +103,75 @@ class Database:
         photo.date_taken = date_taken
         sess.commit()
 
+    def drop_photo(self, photo_id):
+        """
+        Deletes a photo entirely from the database
+
+        Parameters
+        ----------
+        photo_id
+            The ID of the photo to be deleted
+
+        Returns
+        -------
+
+        """
+        photo = sess.query(Photo).filter(Photo.photo_ID == photo_id).first()
+        sess.delete(photo)
+        sess.commit()
+        # Makes sure that all the timelines still have enough images
+        self.check_timelines_have_images()
+        # Makes sure that all the timelines still have a valid thumbnail
+        self.check_thumbnails()
+
+    def check_timelines_have_images(self):
+        """
+        Checks that all the timelines in the database have a sufficient number of images
+        If one does not, it is removed
+
+        Returns
+        -------
+
+        """
+        timelines = sess.query(Timeline).filter(Timeline.timeline_ID != 999).all()
+        for timeline in timelines:
+            if self.count_photos(timeline.timeline_ID) < 2:
+                self.delete_timeline(timeline.timeline_ID)
+
+    def check_thumbnails(self):
+        """
+        Checks that all the timelines in the database have valid thumbnails
+        If not, it adds a valid thumbnail
+
+        Returns
+        -------
+
+        """
+        # Gets all the timelines apart from the temporary timeline
+        timelines = sess.query(Timeline).filter(Timeline.timeline_ID != 999).all()
+        # Goes through each, checking that its thumbnail ID references a valid photo
+        for timeline in timelines:
+            if not self.get_image_from_id(timeline.thumbnail_photo_ID):
+                # If it does not, it automatically creates a thumbnail for the timeline
+                self.auto_thumbnail(timeline.timeline_ID)
+
+    def count_photos(self, timeline_id):
+        """
+        Counts the number of photos in a given timeline
+
+        Parameters
+        ----------
+        timeline_id
+            The ID of the timeline for which to count photos
+
+        Returns
+        -------
+        The number of photos on the timeline
+
+        """
+        timeline = sess.query(Timeline).filter(Timeline.timeline_ID == timeline_id).first()
+        return len(timeline.photos_on_line)
+
     def get_image_from_caption(self, caption):
         """
 
@@ -145,6 +214,8 @@ class Database:
         if sess.query(Photo).filter(Photo.photo_ID == id).first():
             image_binary = sess.query(Photo).filter(Photo.photo_ID == id).first().data
             return io.BytesIO(image_binary)
+        else:
+            return None
 
     def get_thumbnails(self):
         """
@@ -169,9 +240,30 @@ class Database:
             if photo_data:
                 photo_data = photo_data.data
                 photo_data = io.BytesIO(photo_data)
-            return_list.append([name, photo_data])
+            return_list.append((name, photo_data))
 
         return return_list
+
+    def drop_timeline(self, timeline_id):
+        """
+        Deletes a timeline from the database
+
+        Parameters
+        ----------
+        timeline_id
+            The ID of the timeline to be deleted
+
+        Returns
+        -------
+
+        """
+        # Grabs the necessary timeline
+        timeline = sess.query(Timeline).filter(Timeline.timeline_ID == timeline_id).first()
+        # Clears all the photos from the timeline
+        self.clear_photos(timeline.timeline_ID)
+        # Deleted the timeline from the database
+        sess.delete(timeline)
+        sess.commit()
 
     def get_timeline_name(self, id):
         """
@@ -245,13 +337,6 @@ class Database:
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id).first()
         if timeline and timeline.date_modified:
             return timeline.date_modified
-        else:
-            return ""
-
-    def get_timeline_background_photo_id(self, id):
-        timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id).first()
-        if timeline and timeline.background_photo_ID:
-            return timeline.background_photo_ID
         else:
             return ""
 
@@ -331,6 +416,18 @@ class Database:
             return ""
 
     def get_timeline_default_border_colour(self, id):
+        """
+        Grabs the border colour of the photos in the timeline
+
+        Parameters
+        ----------
+        id
+            The timeline for which the information is to be accessed
+
+        Returns
+        -------
+
+        """
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id).first()
         if timeline and timeline.default_border_colour:
             return timeline.default_border_colour
@@ -338,8 +435,20 @@ class Database:
             return ""
 
     def get_timeline_default_border_weight(self, id):
+        """
+        Grabs the border colour of the photos in the timeline
+
+        Parameters
+        ----------
+        id
+            The timeline for which the information is to be accessed
+
+        Returns
+        -------
+
+        """
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id).first()
-        if timeline and timeline.default_border_weight:
+        if timeline and timeline.default_border_weight or timeline.default_border_weight == 0:
             return timeline.default_border_weight
         else:
             return ""
@@ -367,7 +476,9 @@ class Database:
         line_weight
             The weight of the actual line
         default_border_colour
+            The colour of the borders for the photos
         default_border_weight
+            The weight of the borders for the photos
 
         Returns
         -------
@@ -397,9 +508,11 @@ class Database:
 
         """
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id)
+        # Adds to an existing timeline if one exists
         if timeline.first():
             timeline.update({Timeline.name: name})
             sess.commit()
+        # Otherwise creates a new timeline
         else:
             timeline = Timeline(timeline_ID=id, name=name)
             sess.add(timeline)
@@ -421,9 +534,11 @@ class Database:
 
         """
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id)
+        # Adds to a timeline if one exists
         if timeline:
             timeline.update({Timeline.thumbnail_photo_ID: thumbnail_photo_id})
             sess.commit()
+        # Otherwise creates a new timeline
         else:
             timeline = Timeline(thumbnail_photo_ID=thumbnail_photo_id)
             sess.add(timeline)
@@ -445,21 +560,13 @@ class Database:
 
         """
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id)
+        # Adds to a timeline if one exists
         if timeline:
             timeline.update({Timeline.date_modified: date_modified})
             sess.commit()
+        # Otherwise creates a new timeline
         else:
             timeline = Timeline(date_modified=date_modified)
-            sess.add(timeline)
-            sess.commit()
-
-    def set_timeline_background_photo_id(self, id, background_photo_id):
-        timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id)
-        if timeline:
-            timeline.update({Timeline.background_photo_ID: background_photo_id})
-            sess.commit()
-        else:
-            timeline = Timeline(background_photo_ID=background_photo_id)
             sess.add(timeline)
             sess.commit()
 
@@ -536,6 +643,21 @@ class Database:
             sess.commit()
 
     def set_timeline_default_border_colour(self, id, default_border_colour):
+        """
+        Sets the border colour for the photos of the timeline specified by the id
+        creates a new timeline if one doesn't exist
+
+        Parameters
+        ----------
+        id
+            The id of the timeline to be updated
+        default_border_colour
+            The desired border colour
+
+        Returns
+        -------
+
+        """
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id)
         if timeline:
             timeline.update({Timeline.default_border_colour: default_border_colour})
@@ -546,6 +668,21 @@ class Database:
             sess.commit()
 
     def set_timeline_default_border_weight(self, id, default_border_weight):
+        """
+        Sets the border weight for the photos of the timeline specified by the id
+        creates a new timeline if one doesn't exist
+
+        Parameters
+        ----------
+        id
+            The id of the timeline to be updated
+        default_border_weight
+            The desired border weight
+
+        Returns
+        -------
+
+        """
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == id)
         if timeline:
             timeline.update({"default_border_weight": default_border_weight})
@@ -844,18 +981,6 @@ class Database:
             y_dict[id] = y
         return y_dict
 
-    def space_coords_out(self, x_coords_dict, tolerance):
-        y_dict = {}
-        for id in x_coords_dict:
-            y = 200
-            for other_coord in x_coords_dict:
-                if x_coords_dict[other_coord] in range(int(x_coords_dict[id]) - tolerance,
-                                                       int(x_coords_dict[id]) + tolerance) and id != other_coord:
-                    y += random.randint(100, 400)
-            y_dict[id] = y
-        #   x_coords_dict.pop(id)
-        return y_dict
-
     def timelines_exist(self):
         """
         Determines if there are any timeline in existence
@@ -1000,7 +1125,7 @@ class Database:
 
             return sort
 
-    def upload_photo(self, filepath, caption: str = None, date_taken: datetime.date = None):
+    def upload_photo(self, filepath, caption: str = None, date_taken: datetime.datetime = None):
         """
         Uploads a photo to the database from the filepath
 
@@ -1041,6 +1166,7 @@ class Database:
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == timeline_id).first()
         if timeline and photo:
             timeline.photos_on_line.append(photo)
+            photo.num_uses = photo.num_uses + 1
             sess.commit()
 
     def remove_image_from_timeline(self, photo_id, timeline_id):
@@ -1061,6 +1187,7 @@ class Database:
         photo = sess.query(Photo).filter(Photo.photo_ID == photo_id).first()
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == timeline_id).first()
         timeline.photos_on_line.remove(photo)
+        photo.num_uses = photo.num_uses - 1
         sess.commit()
 
     def image_in_timeline(self, photo_id, timeline_id):
@@ -1116,10 +1243,11 @@ class Database:
             photos = sess.query(Timeline).filter(Timeline.timeline_ID == timeline_id).first().photos_on_line
         else:
             return []
-        # List comprehension to create a two-dimensional list of thumbnails and photo IDs
-        return [[self.make_thumbnail(photo), photo.photo_ID] for photo in photos if photo]
+        # List comprehension to create a tuple list of thumbnails and photo IDs
+        return [(self.make_thumbnail(photo), photo.photo_ID) for photo in photos if photo]
 
     def filter_thumbnails_and_ids(self, thumbnails_and_ids, tags):
+        print(tags)
         """
         Filters thumbnails and IDs according to the given tags
 
@@ -1141,10 +1269,12 @@ class Database:
         for item in thumbnails_and_ids:
             photo = sess.query(Photo).filter(Photo.photo_ID == item[1]).first()
             # Goes through each tag to check if the photo has any of the tags
-            for tag in tags:
-                if tag in photo.tags:
-                    # Only returns the photos and IDs which have the tags
-                    return_list.append(item)
+            print(photo)
+            print(photo.tags)
+            if set(tags) <= set(photo.tags):
+                # Only returns the photos and IDs which have all the tags
+                return_list.append(item)
+                print(return_list)
         return return_list
 
     def get_photos_and_ids(self, timeline_id=None):
@@ -1281,7 +1411,7 @@ class Database:
         The ID of the newly created tag
 
         """
-        tag = Tag(name=name, colour=colour)
+        tag = Tag(name=name, colour=colour, num_uses=0)
         sess.add(tag)
         sess.commit()
         return tag.tag_ID
@@ -1304,6 +1434,7 @@ class Database:
         tag = sess.query(Tag).filter(Tag.tag_ID == tag_id).first()
         photo = sess.query(Photo).filter(Photo.photo_ID == photo_id).first()
         photo.tags.append(tag)
+        tag.num_uses += 1
         sess.commit()
 
     def remove_tag_from_photo(self, tag_id, photo_id):
@@ -1324,6 +1455,7 @@ class Database:
         tag = sess.query(Tag).filter(Tag.tag_ID == tag_id).first()
         photo = sess.query(Photo).filter(Photo.photo_ID == photo_id).first()
         photo.tags.remove(tag)
+        tag.num_uses -= 1
         sess.commit()
 
     def get_tags(self, photo_id=None, search_key=""):
@@ -1388,8 +1520,12 @@ class Database:
         A string representing the date in form DD/MM/YYYY
 
         """
+        # Gets all the metadata for the image
         metadata = Image.open(filepath)._getexif()
+        # Accesses the datetime using the exif tag 36867
         date_string = metadata[36867]
+        # Gets just the date, without the time
         date = date_string.split(" ")[0]
+        # Gets and formats the day, month and year
         year, month, day = date.split(":")
         return f"{day}/{month}/{year}"

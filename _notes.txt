@@ -62,3 +62,16 @@ also deemed non-essential?
 I do need to do validation: if two timelines have the same name, the sorting algorithm will output one of them twice (i think)
 
 Talk about how dictionary for frames didnt work
+
+Bea feedback <3
+might want search on the timeline overviews
+deal with line weight boundary cases
+maybe put title in line when line weight above 7?
+include other cases for number / density of photos
+maybe have January label instead of 2024?
+and could have years with the months
+
+
+for sample database, the num uses needs to be updated: wasn't incrementing until now
+regex for date: some boundary cases suchas day=35 pass the regex, but then hit datetime's more robust validators
+when a photo is deleted, the program crashes if it is a thumbnail
