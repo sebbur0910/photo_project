@@ -44,8 +44,6 @@ class Database:
                 data=default_images[default_image])
             sess.add(photo)
             return "plus photo added"
-        elif default_image == "settings":
-            ...
         else:
             photo = Photo(num_uses=0)
 
@@ -261,7 +259,7 @@ class Database:
         timeline = sess.query(Timeline).filter(Timeline.timeline_ID == timeline_id).first()
         # Clears all the photos from the timeline
         self.clear_photos(timeline.timeline_ID)
-        # Deleted the timeline from the database
+        # Deletes the timeline from the database
         sess.delete(timeline)
         sess.commit()
 
@@ -919,31 +917,31 @@ class Database:
             # Finds the duration between this photo and the least recent
             timedelta = photo.date_taken - least_recent
             # Finds this duration as a proportion of the range then scales to an x-coordinate
-            x_coord = (timedelta / master_timedelta) * 1500 * scale
+            x_coord = (timedelta / master_timedelta) * 8000 * scale
             # Adds to the photo_dict the ID of the photo and its corresponding x-coordinate
             photo_dict[photo.photo_ID] = x_coord
 
         # Now the algorithm does a similar thing for the date markers (e.g. "February" or "2021")
-        first_year = least_recent.year
+        first_year = least_recent.year - 1
         last_year = most_recent.year + 1
         # Initialises the incrementer as the bottom of the range
         # This incrementer will increase a month at a time, in order to generate labels for each monthly interval
-        incrementer = datetime.datetime(first_year - 1, 12, 1)
+        incrementer = datetime.datetime(first_year, 12, 1)
         month_timedelta = datetime.timedelta(days=30)
         # Checks if the month labels will squish together when displayed
         # Calculates the distance between month labels and checks if it is too small
         # If it is too small, self.show_month is set to False, telling the algorithm not the show months on the timeline
-        if (month_timedelta / master_timedelta) * 8000 * scale < 75:
+        if (month_timedelta / master_timedelta) * 16000 * scale < 75:
             self.show_month = False
         markers = []
         # Steps the incrementer up by a month at a time, until it reaches the end of the range
         while incrementer <= datetime.datetime(last_year, 1, 1):
             incrementer = datetime.datetime((incrementer.year + incrementer.month // 12),
                                             ((incrementer.month % 12) + 1), 1)
-            # If the incrementer arrives a January, it outputs the year instead
+            # If the incrementer arrives at January, it outputs the year instead
             # e.g. "November", "December", "2021", "February"
             if incrementer.month == 1:
-                label = incrementer.year
+                label = incrementer.year + 1
             # If show_month is True, the algorithm uses datetime methods to grab the month label
             elif self.show_month:
                 label = incrementer.strftime("%B")
@@ -1074,8 +1072,6 @@ class Database:
             sorted_dates = self.merge_sort(dates, False)
             sorted_ids = [sess.query(Timeline).filter(Timeline.date_modified == date).first().timeline_ID for date in
                           sorted_dates]
-        elif factor == "Favourites":
-            ...
         return sorted_ids
 
     def merge_sort(self, items, reverse):
@@ -1247,7 +1243,7 @@ class Database:
         return [(self.make_thumbnail(photo), photo.photo_ID) for photo in photos if photo]
 
     def filter_thumbnails_and_ids(self, thumbnails_and_ids, tags):
-        print(tags)
+
         """
         Filters thumbnails and IDs according to the given tags
 
@@ -1269,12 +1265,12 @@ class Database:
         for item in thumbnails_and_ids:
             photo = sess.query(Photo).filter(Photo.photo_ID == item[1]).first()
             # Goes through each tag to check if the photo has any of the tags
-            print(photo)
-            print(photo.tags)
+
+
             if set(tags) <= set(photo.tags):
                 # Only returns the photos and IDs which have all the tags
                 return_list.append(item)
-                print(return_list)
+
         return return_list
 
     def get_photos_and_ids(self, timeline_id=None):
@@ -1289,7 +1285,7 @@ class Database:
 
         Returns
         -------
-        A two-dimensional list, where the first elements are IO Bytestreams representing the photos
+        A list of tuples, where the first elements are IO Bytestreams representing the photos
         And the second are IDs of the photos
 
         """
@@ -1299,7 +1295,7 @@ class Database:
             photos = sess.query(Timeline).filter(Timeline.timeline_ID == timeline_id).first().photos_on_line
         else:
             return []
-        return [[io.BytesIO(photo.data), photo.photo_ID] for photo in photos if photo]
+        return [(io.BytesIO(photo.data), photo.photo_ID) for photo in photos if photo]
 
     def get_photo_caption(self, id):
         """
@@ -1429,6 +1425,7 @@ class Database:
 
         Returns
         -------
+        The tag object
 
         """
         tag = sess.query(Tag).filter(Tag.tag_ID == tag_id).first()
@@ -1436,6 +1433,7 @@ class Database:
         photo.tags.append(tag)
         tag.num_uses += 1
         sess.commit()
+        return tag
 
     def remove_tag_from_photo(self, tag_id, photo_id):
         """
@@ -1521,7 +1519,10 @@ class Database:
 
         """
         # Gets all the metadata for the image
-        metadata = Image.open(filepath)._getexif()
+        try:
+            metadata = Image.open(filepath)._getexif()
+        except:
+            return ""
         # Accesses the datetime using the exif tag 36867
         date_string = metadata[36867]
         # Gets just the date, without the time
@@ -1529,3 +1530,19 @@ class Database:
         # Gets and formats the day, month and year
         year, month, day = date.split(":")
         return f"{day}/{month}/{year}"
+
+    def get_tag(self, tag_id):
+        """
+        Gets a tag object
+
+        Parameters
+        ----------
+        tag_id
+            The ID of the tag object to get
+
+        Returns
+        -------
+        The specified tag object
+        """
+        tag = sess.query(Tag).filter(Tag.tag_ID == tag_id).first()
+        return tag

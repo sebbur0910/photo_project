@@ -95,23 +95,24 @@ class App(ctk.CTk):
         frame_to_show.pack(expand=True, fill=ctk.BOTH)
 
 
-class HomeScreen(ctk.CTkFrame):
+class HomeScreen(ctk.CTkScrollableFrame):
 
     def __init__(self, root):
         super().__init__(root)
         self.root = root
         self.deleting = False
+        self.column_width = int(self.winfo_screenwidth() / 5) - 20
         # Gets the plus image and the 'images' image for the add timeline and image gallery buttons
         if not database.get_image_from_caption("plus"):
             database.add_image(from_default_set="plus")
         plus_image = database.get_image_from_caption("plus")
         self.my_image = ctk.CTkImage(light_image=Image.open(plus_image),
-                                     size=(150, 100))
+                                     size=(self.column_width, int(self.column_width * 2 / 3)))
         if not database.get_image_from_caption("images"):
             database.add_image(from_default_set="images")
         images_image = database.get_image_from_caption("images")
         self.my_image_2 = ctk.CTkImage(light_image=Image.open(images_image),
-                                       size=(150, 100))
+                                       size=(self.column_width, int(self.column_width * 2 / 3)))
         # Makes a label for the title
         self.title_text = ctk.CTkLabel(self,
                                        text="Home",
@@ -174,11 +175,11 @@ class HomeScreen(ctk.CTkFrame):
         -------
 
         """
-        self.grid_columnconfigure(0, minsize=int(self.winfo_screenwidth() / 5) - 10)
-        self.grid_columnconfigure(1, minsize=int(self.winfo_screenwidth() / 5) - 10)
-        self.grid_columnconfigure(2, minsize=int(self.winfo_screenwidth() / 5) - 10)
-        self.grid_columnconfigure(3, minsize=int(self.winfo_screenwidth() / 5) - 10)
-        self.grid_columnconfigure(4, minsize=int(self.winfo_screenwidth() / 5) - 10)
+        self.grid_columnconfigure(0, minsize=self.column_width)
+        self.grid_columnconfigure(1, minsize=self.column_width)
+        self.grid_columnconfigure(2, minsize=self.column_width)
+        self.grid_columnconfigure(3, minsize=self.column_width)
+        self.grid_columnconfigure(4, minsize=self.column_width)
 
     def place(self):
         """
@@ -228,7 +229,7 @@ class HomeScreen(ctk.CTkFrame):
             thumbnail = database.get_thumbnail(id)
             # Converts this into a ctk image
             thumbnail = ctk.CTkImage(light_image=Image.open(thumbnail),
-                                     size=(150, 100))
+                                     size=(self.column_width, int(self.column_width * 2 / 3)))
             name = database.get_timeline_name(id)
             # Creates a button for this timeline
             # The button displays the timeline thumbnail and name
@@ -237,7 +238,7 @@ class HomeScreen(ctk.CTkFrame):
                                          image=thumbnail,
                                          text=name,
                                          command=partial(self.timeline_click, id),
-                                         width=150,
+                                         width=self.column_width,
                                          compound="top"
                                          )
             # The timeline is placed on the grid.
@@ -592,7 +593,7 @@ class CustomiseTimeline(ctk.CTkFrame):
         # By default, the data is accepted
         accept = True
         # If no photos have been added to the timeline, it is rejected
-        if not database.count_photos(self.timeline_id) < 2:
+        if database.count_photos(self.timeline_id) < 2:
             accept = False
             # The corresponding message is then placed
             self.no_photos_label.grid(row=7, column=1)
@@ -627,13 +628,13 @@ class CustomiseTimeline(ctk.CTkFrame):
             self.line_weight_bad_label.grid_forget()
         # Checks the background colour in the same manner as the line colour
         if background_colour.lower() not in ["", "red", "green", "yellow", "blue", "white", "orange", "pink", "black"]:
-            self.background_colour_bad_label.grid(column=2, row=4)
+            self.background_colour_bad_label.grid(column=2, row=6)
             accept = False
         else:
             self.background_colour_bad_label.grid_forget()
         # Checks the default border colour in the same manner as the line colour
         if default_border_colour not in ["", "red", "green", "yellow", "blue", "white", "orange", "pink", "black"]:
-            self.default_border_colour_bad_label.grid(column=2, row=6)
+            self.default_border_colour_bad_label.grid(column=2, row=4)
             accept = False
         else:
             self.default_border_colour_bad_label.grid_forget()
@@ -1145,6 +1146,7 @@ class PhotoPicker(PhotoGallery):
     Inherits from PhotoGallery: it is the same, but open_image is different
     This is an example of polymorphism
     """
+
     def __init__(self, root, timeline_id):
         """
         Initialises an object
@@ -1197,6 +1199,7 @@ class TimelineView(ctk.CTkFrame):
     """
     A class for the screen where the user can view a timeline
     """
+
     def __init__(self, root, timeline_id):
         """
         Initialises an object
@@ -1387,17 +1390,17 @@ class TimelineView(ctk.CTkFrame):
                                     # Sets the scroll to be managed by the scrollbar
                                     xscrollcommand=self.scrollbar.set,
                                     # Sets the region which can be scrolled to
-                                    scrollregion=(-5000 * scale, self.screen_height, 5000 * scale, 0),
+                                    scrollregion=(-16000 * scale, self.screen_height, 16000 * scale, 0),
                                     )
         # Creates the line for the timeline
         # The bottom left corner of the timeline rectangle is at:
         # 5000 pixels multiplied by the scale to the left
         # And the line weight multiplied by 5 below the horizontal centre
         # Other corners are set similarly
-        self.canvas.create_polygon((-5000 * scale, self.screen_height / 2 - self.line_weight * 5),
-                                   (-5000 * scale, self.screen_height / 2 + self.line_weight * 5),
-                                   (5000 * scale, self.screen_height / 2 + self.line_weight * 5),
-                                   (5000 * scale, self.screen_height / 2 - self.line_weight * 5),
+        self.canvas.create_polygon((-16000 * scale, self.screen_height / 2 - self.line_weight * 5),
+                                   (-16000 * scale, self.screen_height / 2 + self.line_weight * 5),
+                                   (16000 * scale, self.screen_height / 2 + self.line_weight * 5),
+                                   (16000 * scale, self.screen_height / 2 - self.line_weight * 5),
                                    fill=self.line_colour,
                                    )
         # Gets the photos and their corresponding IDs for the timeline
@@ -1478,6 +1481,7 @@ class ImportPhoto(ctk.CTkScrollableFrame):
     """
     Screen to import or edit the properties of a photo
     """
+
     def __init__(self, root, timeline_id=None, photo_id=None):
         """
         Initialises an object
@@ -1603,12 +1607,13 @@ class ImportPhoto(ctk.CTkScrollableFrame):
         # If both of these have been inputted by the user, the tag is added to the database
         if tag_name and tag_colour:
             tag_id = database.add_tag(tag_name, tag_colour)
+            tag = database.get_tag(tag_id)
             # The tag is then added to the photo
             if self.photo_id:
                 database.add_tag_to_photo(tag_id, self.photo_id)
             else:
                 # If there is no photo yet, this tag is added to a temporary store
-                self.temp_tags.append([tag_id, tag_name, tag_colour])
+                self.temp_tags.append(tag)
         # Re-places the tags
         self.place_tags()
 
@@ -1851,6 +1856,7 @@ class ImportPhoto(ctk.CTkScrollableFrame):
                 database.add_image_to_timeline(new_photo_id, self.timeline_id)
                 # The temporary tag store is unloaded and all tags are added to the photo
                 for tag in self.temp_tags:
+                    print(tag)
                     database.add_tag_to_photo(tag.tag_ID, new_photo_id)
             # If this is a new photo and this is not for a specific timeline
             # The photo is just uploaded into the image gallery
@@ -1881,6 +1887,7 @@ class ImportPhoto(ctk.CTkScrollableFrame):
         # Otherwise, the previous screen was the photo gallery
         else:
             self.root.show_frame("photo_gallery")
+
 
 # Creates an instance of the app
 gui = App()
