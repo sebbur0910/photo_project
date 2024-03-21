@@ -12,15 +12,13 @@ A-Level coursework project: photo timelines
 - requirements.txt: describes requirements to run
 - test_entities.py: unit tests for entities.py and the database
 - view.py: GUI for program
+- database.sqlite
 
 ## To run:
 - Install packages specified in requirements.txt
 - Ensure that necessary SQL drivers are installed
+- Ensure that the sample database (database.sqlite) is installed
 - Run file view.py
 - GUI is best experienced in fullscreen
+- Please note that the geometry on the GUI may go a bit funky for different devices.
 
-## To-do / missing functionalities:
-- Full implementation of photo tags, including in filtering the image gallery
-- Further functionality for image modification
-- Cleaning up and making the GUI look pretty
-- Testing
