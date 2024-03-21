@@ -1,0 +1,32 @@
+#@validates("line_colour")
+ #   def validate_background_colour(self, key, address):
+  #      if not re.fullmatch("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", address):
+   #         raise ValueError("Line colour must be in hex colour code format")
+    #    return address
+
+    #@validates("default_border_colour")
+    #def validate_background_colour(self, key, address):
+     #   if not re.fullmatch("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", address):
+      #      raise ValueError("Default border colour must be in hex colour code format")
+       # return address
+
+#def adjusted_screenwidth(self):
+    #      print(f"dpi: { self.winfo_fpixels("1i")}")
+    #     self.dpi_scale_factor = self.winfo_fpixels("1i") / 96
+    #    return self.winfo_screenwidth()*self.dpi_scale_factor
+
+    # def adjusted_screenheight(self):
+    #   self.dpi_scale_factor = self.winfo_fpixels("1i") / 96
+    #  return self.winfo_screenheight()*self.dpi_scale_factor
+
+#self.frames = {
+        #   "homescreen": HomeScreen(self),
+        #  "add_timeline": CustomiseTimeline(self, 999),
+        # "photo_gallery": PhotoGallery(self, False),
+        # "timeline": TimelineView(self, id),
+        # "customise_timeline": CustomiseTimeline(self, id),
+        # "timeline_photos": PhotoGallery(self, id),
+        # "timeline_new_photo": ImportPhoto(self, timeline_id=id),
+        # "view_photo": ImportPhoto(self, photo_id=id),
+        # "photo_picker": PhotoPicker(self, timeline_id=id)
+        # }

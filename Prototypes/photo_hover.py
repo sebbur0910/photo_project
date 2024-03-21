@@ -17,7 +17,7 @@ class PhotoScreen(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        filepath = "/home/burbidgesebastian/pycharm-2022.2.2/photo_project/Prototypes/photo_upload/sample.jpg"
+        filepath = "G:/My Drive/School/Year 13/Computer Science/Sample database images/tree 2.jpg"
         self.my_image = ctk.CTkImage(light_image=Image.open(filepath),
 
                                      size=(150, 100))

@@ -1,6 +1,6 @@
 # Photo_project
 
-A-Level coursework project
+A-Level coursework project: photo timelines
 
 ## Files:
 - _notes.txt: developer notes
